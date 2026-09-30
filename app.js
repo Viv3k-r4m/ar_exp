@@ -1,140 +1,435 @@
-let currentSequence = "";
-let startTime = 0;
-
-const startButton = document.getElementById("startButton");
-const submitButton = document.getElementById("submitButton");
-
-const sequence = document.getElementById("sequence");
-const answer = document.getElementById("answer");
-const result = document.getElementById("result");
-const instruction = document.getElementById("instruction");
-
-const marker = document.getElementById("hiroMarker");
+// ==========================================
+// AR COGNITIVE LAB
+// MARKERLESS CAMERA AR
+// ==========================================
 
 
-// ================================
-// MARKER DETECTION
-// ================================
+const camera =
+    document.getElementById("camera");
 
-marker.addEventListener("markerFound", function () {
+const startScreen =
+    document.getElementById("startScreen");
 
-    instruction.innerText =
-        "✅ Marker detected! You can start the test.";
+const testScreen =
+    document.getElementById("testScreen");
 
-    sequence.innerText =
-        "Ready";
+const resultScreen =
+    document.getElementById("resultScreen");
 
-});
+const startButton =
+    document.getElementById("startButton");
+
+const restartButton =
+    document.getElementById("restartButton");
+
+const circle =
+    document.getElementById("circle");
+
+const word =
+    document.getElementById("word");
+
+const trialInfo =
+    document.getElementById("trialInfo");
+
+const feedback =
+    document.getElementById("feedback");
+
+const finalAccuracy =
+    document.getElementById("finalAccuracy");
+
+const finalTime =
+    document.getElementById("finalTime");
+
+const finalCorrect =
+    document.getElementById("finalCorrect");
+
+const answerButtons =
+    document.querySelectorAll(".answer");
 
 
-marker.addEventListener("markerLost", function () {
+// ==========================================
+// TEST VARIABLES
+// ==========================================
 
-    instruction.innerText =
-        "📷 Point the camera at the Hiro marker.";
+const totalTrials = 5;
 
-    sequence.innerText =
-        "Waiting for marker...";
+let currentTrial = 0;
 
-});
+let correctAnswers = 0;
+
+let reactionTimes = [];
+
+let currentCorrectColor = "";
+
+let trialStartTime = 0;
+
+let cameraStream = null;
 
 
-// ================================
-// RANDOM MEMORY SEQUENCE
-// ================================
+// ==========================================
+// COLORS
+// ==========================================
 
-function generateSequence(length = 5) {
+const colors = {
 
-    let value = "";
+    red: "#ef4444",
 
-    for (let i = 0; i < length; i++) {
+    blue: "#3b82f6",
 
-        value += Math.floor(Math.random() * 10);
+    green: "#22c55e"
+
+};
+
+
+// ==========================================
+// WORDS
+// ==========================================
+
+const colorWords = {
+
+    red: "RED",
+
+    blue: "BLUE",
+
+    green: "GREEN"
+
+};
+
+
+// ==========================================
+// START CAMERA
+// ==========================================
+
+async function startCamera() {
+
+    try {
+
+        cameraStream =
+            await navigator.mediaDevices
+                .getUserMedia({
+
+                    video: {
+
+                        facingMode: {
+                            ideal: "environment"
+                        }
+
+                    },
+
+                    audio: false
+
+                });
+
+
+        camera.srcObject =
+            cameraStream;
+
+
+        console.log(
+            "Camera started"
+        );
+
+
+        startScreen.style.display =
+            "none";
+
+        testScreen.style.display =
+            "block";
+
+
+        startTest();
+
 
     }
 
-    return value;
+    catch (error) {
+
+        console.error(error);
+
+
+        alert(
+            "Camera permission is required. " +
+            "Please allow camera access and reload the page."
+        );
+
+    }
+
 }
 
 
-// ================================
+// ==========================================
 // START TEST
-// ================================
+// ==========================================
 
-startButton.addEventListener("click", function () {
+function startTest() {
 
-    currentSequence = generateSequence(5);
+    currentTrial = 0;
 
-    answer.value = "";
+    correctAnswers = 0;
 
-    result.innerHTML = "";
+    reactionTimes = [];
 
-    sequence.innerText = currentSequence;
+    feedback.innerText = "";
 
-    instruction.innerText =
-        "🧠 Memorize the sequence!";
+    nextTrial();
 
-
-    // Show sequence for 3 seconds
-
-    setTimeout(function () {
-
-        sequence.innerText = "?????";
-
-        instruction.innerText =
-            "Enter the sequence you remember.";
-
-        startTime = performance.now();
-
-    }, 3000);
-
-});
+}
 
 
-// ================================
-// SUBMIT ANSWER
-// ================================
+// ==========================================
+// NEXT TRIAL
+// ==========================================
 
-submitButton.addEventListener("click", function () {
+function nextTrial() {
 
-    const userAnswer =
-        answer.value.trim();
+    currentTrial++;
 
-    if (currentSequence === "") {
 
-        result.innerText =
-            "Start the memory test first.";
+    if (
+        currentTrial >
+        totalTrials
+    ) {
+
+        finishTest();
 
         return;
 
     }
 
 
-    const reactionTime =
-        ((performance.now() - startTime) / 1000)
-        .toFixed(2);
+    trialInfo.innerText =
+        `Trial ${currentTrial} / ${totalTrials}`;
 
 
-    if (userAnswer === currentSequence) {
+    feedback.innerText = "";
 
-        result.innerHTML =
-            "✅ Correct!<br>" +
-            "Reaction Time: " +
-            reactionTime +
-            " seconds";
+
+    // ===============================
+    // RANDOM WORD
+    // ===============================
+
+    const wordColors =
+        Object.keys(colors);
+
+
+    const randomWord =
+        wordColors[
+            Math.floor(
+                Math.random() *
+                wordColors.length
+            )
+        ];
+
+
+    // ===============================
+    // RANDOM INK COLOR
+    // ===============================
+
+    const randomInk =
+        wordColors[
+            Math.floor(
+                Math.random() *
+                wordColors.length
+            )
+        ];
+
+
+    // Correct answer is INK color
+
+    currentCorrectColor =
+        randomInk;
+
+
+    // ===============================
+    // DISPLAY VIRTUAL AR OBJECT
+    // ===============================
+
+    word.innerText =
+        colorWords[randomWord];
+
+
+    word.style.color =
+        colors[randomInk];
+
+
+    circle.style.background =
+        colors[randomInk];
+
+
+    // ===============================
+    // START REACTION TIMER
+    // ===============================
+
+    trialStartTime =
+        performance.now();
+
+}
+
+
+// ==========================================
+// USER ANSWER
+// ==========================================
+
+answerButtons.forEach(
+    button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const selectedColor =
+                    button.dataset.color;
+
+
+                // ==========================
+                // REACTION TIME
+                // ==========================
+
+                const reactionTime =
+                    (
+                        performance.now()
+                        -
+                        trialStartTime
+                    ) / 1000;
+
+
+                reactionTimes.push(
+                    reactionTime
+                );
+
+
+                // ==========================
+                // CHECK ANSWER
+                // ==========================
+
+                if (
+                    selectedColor ===
+                    currentCorrectColor
+                ) {
+
+                    correctAnswers++;
+
+
+                    feedback.innerText =
+                        "✅ Correct!";
+
+                }
+
+                else {
+
+                    feedback.innerText =
+                        "❌ Incorrect!";
+
+                }
+
+
+                // ==========================
+                // CHANGE COMPONENT
+                // ==========================
+
+                setTimeout(
+                    () => {
+
+                        nextTrial();
+
+                    },
+
+                    700
+                );
+
+            }
+        );
 
     }
+);
 
-    else {
 
-        result.innerHTML =
-            "❌ Incorrect!<br>" +
-            "Correct sequence: " +
-            currentSequence +
-            "<br>" +
-            "Reaction Time: " +
-            reactionTime +
-            " seconds";
+// ==========================================
+// FINISH TEST
+// ==========================================
+
+function finishTest() {
+
+
+    testScreen.style.display =
+        "none";
+
+
+    resultScreen.style.display =
+        "block";
+
+
+    // ===============================
+    // ACCURACY
+    // ===============================
+
+    const accuracy =
+        (
+            correctAnswers /
+            totalTrials
+        ) * 100;
+
+
+    // ===============================
+    // AVERAGE REACTION TIME
+    // ===============================
+
+    const totalReactionTime =
+        reactionTimes.reduce(
+            (sum, value) =>
+                sum + value,
+            0
+        );
+
+
+    const averageReactionTime =
+        totalReactionTime /
+        reactionTimes.length;
+
+
+    // ===============================
+    // DISPLAY RESULTS
+    // ===============================
+
+    finalAccuracy.innerText =
+        `Accuracy: ${accuracy.toFixed(0)}%`;
+
+
+    finalTime.innerText =
+        `Average Reaction Time: ${averageReactionTime.toFixed(2)} seconds`;
+
+
+    finalCorrect.innerText =
+        `Correct Responses: ${correctAnswers}/${totalTrials}`;
+
+}
+
+
+// ==========================================
+// RESTART
+// ==========================================
+
+restartButton.addEventListener(
+    "click",
+    () => {
+
+        resultScreen.style.display =
+            "none";
+
+        testScreen.style.display =
+            "block";
+
+        startTest();
 
     }
+);
 
-});
+
+// ==========================================
+// START BUTTON
+// ==========================================
+
+startButton.addEventListener(
+    "click",
+    startCamera
+);

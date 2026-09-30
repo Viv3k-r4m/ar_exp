@@ -2,138 +2,213 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
     <title>AR Cognitive Lab</title>
 
     <link rel="stylesheet" href="style.css">
 
-    <!-- A-Frame -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-
-    <!-- CORRECT AR.js A-Frame library -->
-    <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.js"></script>
-
 </head>
 
 <body>
 
-    <div id="ui">
+
+<!-- ================================= -->
+<!-- CAMERA -->
+<!-- ================================= -->
+
+<video
+    id="camera"
+    autoplay
+    playsinline>
+</video>
+
+
+<!-- ================================= -->
+<!-- DARK OVERLAY -->
+<!-- ================================= -->
+
+<div id="overlay"></div>
+
+
+<!-- ================================= -->
+<!-- MAIN APPLICATION -->
+<!-- ================================= -->
+
+<div id="app">
+
+
+    <div id="header">
 
         <h1>🧠 AR Cognitive Lab</h1>
 
-        <p id="instruction">
-            Allow camera access to begin.
+        <p>
+            Markerless Cognitive Assessment
         </p>
 
-        <button id="startButton">
-            Start Memory Test
-        </button>
+    </div>
 
-        <div id="testArea">
 
-            <p id="sequence">
-                Waiting for marker...
+    <!-- START SCREEN -->
+
+    <div id="startScreen">
+
+        <div class="card">
+
+            <h2>
+                Visual Attention Test
+            </h2>
+
+            <p>
+                The camera will open and
+                virtual objects will appear.
             </p>
 
-            <input
-                type="text"
-                id="answer"
-                placeholder="Enter sequence"
-                autocomplete="off"
-            >
+            <p>
+                Identify the correct color
+                as quickly as possible.
+            </p>
 
-            <button id="submitButton">
-                Submit
+            <button id="startButton">
+                📷 Start Camera
             </button>
-
-            <p id="result"></p>
 
         </div>
 
     </div>
 
 
-    <!-- ========================= -->
-    <!-- AR SCENE                  -->
-    <!-- ========================= -->
+    <!-- TEST SCREEN -->
 
-    <a-scene
-        embedded
-        vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true"
-        arjs="sourceType: webcam; debugUIEnabled: false;"
-        gesture-detector
-        id="arScene">
+    <div id="testScreen">
 
-        <!-- Hiro marker -->
-
-        <a-marker
-            preset="hiro"
-            id="hiroMarker">
-
-            <!-- AR cube -->
-
-            <a-box
-                id="cube"
-                position="0 0.5 0"
-                rotation="0 45 0"
-                color="#4CC3D9"
-                animation="
-                    property: rotation;
-                    to: 0 405 0;
-                    loop: true;
-                    dur: 5000">
-
-            </a-box>
+        <div id="trialInfo">
+            Trial 1 / 5
+        </div>
 
 
-            <!-- Text -->
+        <!-- AR VIRTUAL OBJECT -->
 
-            <a-text
-                value="MEMORY TEST"
-                position="0 1.3 0"
-                rotation="-90 0 0"
-                align="center"
-                color="white"
-                width="4">
+        <div id="arObject">
 
-            </a-text>
+            <div id="circle"></div>
 
+            <div id="word">
+                RED
+            </div>
 
-            <!-- Left sphere -->
-
-            <a-sphere
-                position="-0.8 0.5 0"
-                radius="0.15"
-                color="#EF2D5E">
-
-            </a-sphere>
+        </div>
 
 
-            <!-- Right sphere -->
+        <!-- QUESTION -->
 
-            <a-sphere
-                position="0.8 0.5 0"
-                radius="0.15"
-                color="#FFC65D">
+        <div id="questionBox">
 
-            </a-sphere>
+            <h2>
+                What is the color?
+            </h2>
 
-        </a-marker>
-
-
-        <!-- Camera -->
-
-        <a-entity camera></a-entity>
-
-    </a-scene>
+            <p id="instruction">
+                Select the ink color
+            </p>
 
 
-    <script src="app.js"></script>
+            <!-- ANSWERS -->
+
+            <div id="answers">
+
+                <button
+                    class="answer"
+                    data-color="red">
+
+                    RED
+
+                </button>
+
+
+                <button
+                    class="answer"
+                    data-color="blue">
+
+                    BLUE
+
+                </button>
+
+
+                <button
+                    class="answer"
+                    data-color="green">
+
+                    GREEN
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- FEEDBACK -->
+
+        <div id="feedback"></div>
+
+    </div>
+
+
+    <!-- RESULT SCREEN -->
+
+    <div id="resultScreen">
+
+        <div class="resultCard">
+
+            <h1>
+                🧠 Test Complete
+            </h1>
+
+            <p id="finalAccuracy"></p>
+
+            <p id="finalTime"></p>
+
+            <p id="finalCorrect"></p>
+
+            <hr>
+
+            <p>
+                Cognitive Functions Tested
+            </p>
+
+            <ul>
+
+                <li>Visual Attention</li>
+
+                <li>Response Inhibition</li>
+
+                <li>Decision Making</li>
+
+                <li>Reaction Time</li>
+
+            </ul>
+
+
+            <button id="restartButton">
+
+                Run Test Again
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="app.js"></script>
 
 </body>
 

@@ -2,104 +2,29 @@
     box-sizing: border-box;
 }
 
+
 body {
+
     margin: 0;
+
+    padding: 0;
+
     overflow: hidden;
 
-    font-family: Arial, sans-serif;
-
-    background: #111827;
-
-    color: white;
-}
-
-#ui {
-
-    position: fixed;
-
-    z-index: 10;
-
-    top: 10px;
-
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    width: 94%;
-
-    max-width: 500px;
-
-    background: rgba(0, 0, 0, 0.75);
-
-    padding: 15px;
-
-    border-radius: 18px;
-
-    text-align: center;
-}
-
-h1 {
-    font-size: 23px;
-    margin: 3px 0 8px;
-}
-
-button {
-
-    width: 100%;
-
-    padding: 12px;
-
-    margin-top: 8px;
-
-    border: none;
-
-    border-radius: 10px;
-
-    background: #2563eb;
+    font-family:
+        Arial,
+        sans-serif;
 
     color: white;
 
-    font-size: 16px;
-
-    font-weight: bold;
 }
 
-input {
 
-    width: 100%;
+/* ================================= */
+/* CAMERA */
+/* ================================= */
 
-    padding: 12px;
-
-    margin-top: 8px;
-
-    border-radius: 10px;
-
-    border: none;
-
-    font-size: 18px;
-
-    text-align: center;
-}
-
-#sequence {
-
-    font-size: 27px;
-
-    font-weight: bold;
-
-    letter-spacing: 6px;
-
-    min-height: 35px;
-}
-
-#result {
-
-    font-size: 17px;
-
-    font-weight: bold;
-}
-
-a-scene {
+#camera {
 
     position: fixed;
 
@@ -110,4 +35,480 @@ a-scene {
     width: 100vw;
 
     height: 100vh;
+
+    object-fit: cover;
+
+    z-index: -3;
+
+}
+
+
+/* ================================= */
+/* OVERLAY */
+/* ================================= */
+
+#overlay {
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    width: 100vw;
+
+    height: 100vh;
+
+    background:
+        rgba(0, 0, 0, 0.28);
+
+    z-index: -2;
+
+}
+
+
+/* ================================= */
+/* APPLICATION */
+/* ================================= */
+
+#app {
+
+    position: relative;
+
+    width: 100vw;
+
+    height: 100vh;
+
+    z-index: 1;
+
+}
+
+
+/* ================================= */
+/* HEADER */
+/* ================================= */
+
+#header {
+
+    position: absolute;
+
+    top: 15px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    width: 92%;
+
+    max-width: 500px;
+
+    padding: 12px;
+
+    text-align: center;
+
+    border-radius: 15px;
+
+    background:
+        rgba(0, 0, 0, 0.7);
+
+}
+
+
+#header h1 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+}
+
+
+#header p {
+
+    margin: 5px 0 0;
+
+    font-size: 13px;
+
+}
+
+
+/* ================================= */
+/* START SCREEN */
+/* ================================= */
+
+#startScreen {
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    width: 90%;
+
+    max-width: 450px;
+
+}
+
+
+.card {
+
+    padding: 25px;
+
+    text-align: center;
+
+    border-radius: 20px;
+
+    background:
+        rgba(0, 0, 0, 0.82);
+
+    backdrop-filter:
+        blur(8px);
+
+}
+
+
+.card h2 {
+
+    margin-top: 0;
+
+}
+
+
+.card p {
+
+    line-height: 1.5;
+
+    color: #ddd;
+
+}
+
+
+/* ================================= */
+/* BUTTON */
+/* ================================= */
+
+button {
+
+    border: none;
+
+    border-radius: 12px;
+
+    padding: 13px;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+#startButton {
+
+    width: 100%;
+
+    margin-top: 15px;
+
+    background: #2563eb;
+
+    color: white;
+
+}
+
+
+/* ================================= */
+/* TEST SCREEN */
+/* ================================= */
+
+#testScreen {
+
+    display: none;
+
+    width: 100%;
+
+    height: 100%;
+
+}
+
+
+#trialInfo {
+
+    position: absolute;
+
+    top: 100px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    padding: 8px 18px;
+
+    border-radius: 20px;
+
+    background:
+        rgba(0, 0, 0, 0.7);
+
+}
+
+
+/* ================================= */
+/* AR OBJECT */
+/* ================================= */
+
+#arObject {
+
+    position: absolute;
+
+    top: 43%;
+
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    width: 230px;
+
+    height: 230px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    flex-direction: column;
+
+    border-radius: 25px;
+
+    background:
+        rgba(0, 0, 0, 0.5);
+
+    box-shadow:
+        0 0 35px
+        rgba(255, 255, 255, 0.25);
+
+}
+
+
+/* ================================= */
+/* VIRTUAL CIRCLE */
+/* ================================= */
+
+#circle {
+
+    width: 115px;
+
+    height: 115px;
+
+    border-radius: 50%;
+
+    background: red;
+
+    box-shadow:
+        0 0 30px
+        rgba(255, 255, 255, 0.4);
+
+}
+
+
+/* ================================= */
+/* WORD */
+/* ================================= */
+
+#word {
+
+    margin-top: 12px;
+
+    font-size: 25px;
+
+    font-weight: bold;
+
+    letter-spacing: 2px;
+
+}
+
+
+/* ================================= */
+/* QUESTION */
+/* ================================= */
+
+#questionBox {
+
+    position: absolute;
+
+    bottom: 20px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    width: 94%;
+
+    max-width: 500px;
+
+    padding: 15px;
+
+    border-radius: 20px;
+
+    text-align: center;
+
+    background:
+        rgba(0, 0, 0, 0.82);
+
+    backdrop-filter:
+        blur(8px);
+
+}
+
+
+#questionBox h2 {
+
+    margin: 0;
+
+    font-size: 19px;
+
+}
+
+
+#instruction {
+
+    margin: 5px;
+
+    color: #ccc;
+
+    font-size: 13px;
+
+}
+
+
+/* ================================= */
+/* ANSWERS */
+/* ================================= */
+
+#answers {
+
+    display: flex;
+
+    gap: 7px;
+
+}
+
+
+.answer {
+
+    flex: 1;
+
+    color: white;
+
+}
+
+
+.answer[data-color="red"] {
+
+    background: #dc2626;
+
+}
+
+
+.answer[data-color="blue"] {
+
+    background: #2563eb;
+
+}
+
+
+.answer[data-color="green"] {
+
+    background: #16a34a;
+
+}
+
+
+/* ================================= */
+/* FEEDBACK */
+/* ================================= */
+
+#feedback {
+
+    position: absolute;
+
+    top: 145px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+}
+
+
+/* ================================= */
+/* RESULT */
+/* ================================= */
+
+#resultScreen {
+
+    display: none;
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    width: 90%;
+
+    max-width: 450px;
+
+}
+
+
+.resultCard {
+
+    padding: 25px;
+
+    border-radius: 20px;
+
+    text-align: center;
+
+    background:
+        rgba(0, 0, 0, 0.88);
+
+}
+
+
+.resultCard li {
+
+    text-align: left;
+
+    margin: 8px;
+
+}
+
+
+#restartButton {
+
+    width: 100%;
+
+    background: #2563eb;
+
+    color: white;
+
+    margin-top: 15px;
+
 }
