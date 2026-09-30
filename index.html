@@ -5,224 +5,260 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width,
-        initial-scale=1.0,
-        maximum-scale=1.0,
-        user-scalable=no">
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1.0,
+                   maximum-scale=1.0,
+                   user-scalable=no">
 
-    <meta name="theme-color" content="#050814">
+    <meta name="theme-color"
+          content="#050814">
 
-    <title>
-        AR Cognitive Lab
-    </title>
+    <title>AR Cognitive Lab</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet"
+          href="style.css">
 
 </head>
 
 <body>
 
-    <!-- ==============================
-         UI
-    =============================== -->
+<div id="ui">
 
-    <div id="ui">
+    <!-- HEADER -->
 
-        <div id="header">
+    <div id="header">
 
-            <div class="title">
-                🧠 AR Cognitive Lab
-            </div>
-
-            <div class="subtitle">
-                Catch the Target
-            </div>
-
+        <div class="title">
+            🧠 AR Cognitive Lab
         </div>
 
-
-        <!-- START SCREEN -->
-
-        <div id="startScreen" class="panel">
-
-            <div class="emoji">
-                🎯
-            </div>
-
-            <h1>
-                Catch the Target
-            </h1>
-
-            <p>
-                A markerless AR cognitive
-                attention experiment.
-            </p>
-
-            <p class="small">
-
-                Find the requested 3D orb
-                and tap it as quickly as possible.
-
-            </p>
-
-            <button id="startButton">
-
-                START AR
-
-            </button>
-
-            <div id="errorMessage"></div>
-
-        </div>
-
-
-        <!-- AR INSTRUCTIONS -->
-
-        <div id="instruction" class="floatingPanel">
-
-            <div id="instructionTitle">
-                Checking AR...
-            </div>
-
-            <div id="instructionText">
-                Starting camera and surface detection...
-            </div>
-
-        </div>
-
-
-        <!-- GAME INFO -->
-
-        <div id="gameInfo" class="floatingPanel">
-
-            <span id="trialText">
-                Trial 0 / 10
-            </span>
-
-            <span id="scoreText">
-                Score: 0
-            </span>
-
-        </div>
-
-
-        <!-- RESULT -->
-
-        <div id="resultScreen" class="panel">
-
-            <div class="emoji">
-                🧠
-            </div>
-
-            <h1>
-                Test Complete
-            </h1>
-
-            <div class="resultRow">
-
-                <span>
-                    Accuracy
-                </span>
-
-                <strong id="accuracy">
-                    0%
-                </strong>
-
-            </div>
-
-
-            <div class="resultRow">
-
-                <span>
-                    Correct
-                </span>
-
-                <strong id="correct">
-                    0 / 10
-                </strong>
-
-            </div>
-
-
-            <div class="resultRow">
-
-                <span>
-                    Average Reaction
-                </span>
-
-                <strong id="average">
-                    0.00 s
-                </strong>
-
-            </div>
-
-
-            <div class="resultRow">
-
-                <span>
-                    Fastest Reaction
-                </span>
-
-                <strong id="fastest">
-                    0.00 s
-                </strong>
-
-            </div>
-
-
-            <div class="cognitive">
-
-                <strong>
-                    Cognitive Functions
-                </strong>
-
-                <p>
-                    Visual Attention
-                </p>
-
-                <p>
-                    Visual Search
-                </p>
-
-                <p>
-                    Reaction Time
-                </p>
-
-                <p>
-                    Decision Making
-                </p>
-
-            </div>
-
-
-            <button id="restartButton">
-
-                RUN AGAIN
-
-            </button>
-
+        <div class="subtitle">
+            AR Sphere Counting
         </div>
 
     </div>
 
 
-    <!-- Three.js + WebXR -->
+    <!-- START SCREEN -->
 
-    <script type="importmap">
-    {
-        "imports": {
-            "three":
-            "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            
-            "three/addons/":
-            "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-        }
+    <div id="startScreen"
+         class="panel">
+
+        <div class="emoji">
+            🔵
+        </div>
+
+        <h1>
+            AR Sphere Counting
+        </h1>
+
+        <p>
+            A markerless AR cognitive
+            attention experiment.
+        </p>
+
+        <p class="small">
+            Look at the virtual spheres
+            and count the requested color.
+        </p>
+
+        <button id="startButton">
+            START AR
+        </button>
+
+        <div id="errorMessage"></div>
+
+    </div>
+
+
+    <!-- AR INSTRUCTIONS -->
+
+    <div id="instruction"
+         class="floatingPanel">
+
+        <div id="instructionTitle">
+            Checking AR...
+        </div>
+
+        <div id="instructionText">
+            Starting camera and
+            surface detection...
+        </div>
+
+    </div>
+
+
+    <!-- GAME INFORMATION -->
+
+    <div id="gameInfo"
+         class="floatingPanel">
+
+        <div>
+            <span id="trialText">
+                Trial 0 / 10
+            </span>
+        </div>
+
+        <div>
+            <span id="scoreText">
+                Score: 0
+            </span>
+        </div>
+
+    </div>
+
+
+    <!-- ANSWER PANEL -->
+
+    <div id="answerPanel"
+         class="answerPanel">
+
+        <div id="questionText">
+            How many RED spheres?
+        </div>
+
+        <input
+            id="answerInput"
+            type="number"
+            min="0"
+            max="20"
+            inputmode="numeric"
+            placeholder="Enter count">
+
+        <button id="submitAnswer">
+            SUBMIT ANSWER
+        </button>
+
+    </div>
+
+
+    <!-- RESULT SCREEN -->
+
+    <div id="resultScreen"
+         class="panel">
+
+        <div class="emoji">
+            🧠
+        </div>
+
+        <h1>
+            Test Complete
+        </h1>
+
+
+        <div class="resultRow">
+
+            <span>
+                Accuracy
+            </span>
+
+            <strong id="accuracy">
+                0%
+            </strong>
+
+        </div>
+
+
+        <div class="resultRow">
+
+            <span>
+                Correct
+            </span>
+
+            <strong id="correct">
+                0 / 10
+            </strong>
+
+        </div>
+
+
+        <div class="resultRow">
+
+            <span>
+                Average Reaction
+            </span>
+
+            <strong id="average">
+                0.00 s
+            </strong>
+
+        </div>
+
+
+        <div class="resultRow">
+
+            <span>
+                Fastest Reaction
+            </span>
+
+            <strong id="fastest">
+                0.00 s
+            </strong>
+
+        </div>
+
+
+        <div class="cognitive">
+
+            <strong>
+                Cognitive Functions
+            </strong>
+
+            <p>
+                Visual Attention
+            </p>
+
+            <p>
+                Visual Search
+            </p>
+
+            <p>
+                Visual Counting
+            </p>
+
+            <p>
+                Reaction Time
+            </p>
+
+            <p>
+                Working Memory
+            </p>
+
+        </div>
+
+
+        <button id="restartButton">
+            RUN AGAIN
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- THREE.JS -->
+
+<script type="importmap">
+
+{
+    "imports": {
+
+        "three":
+        "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+
+        "three/addons/":
+        "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+
     }
-    </script>
+}
+
+</script>
 
 
-    <script type="module" src="app.js">
-    </script>
+<script type="module"
+        src="app.js">
+</script>
 
 </body>
 

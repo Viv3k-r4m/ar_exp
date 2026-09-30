@@ -1,393 +1,110 @@
-* {
+/* ==========================================
+   ANSWER PANEL
+========================================== */
 
-    box-sizing: border-box;
-
-    -webkit-tap-highlight-color:
-        transparent;
-
-}
-
-
-html,
-body {
-
-    margin: 0;
-
-    padding: 0;
-
-    width: 100%;
-
-    height: 100%;
-
-    overflow: hidden;
-
-    background: #050814;
-
-    color: white;
-
-    font-family:
-        Arial,
-        sans-serif;
-
-}
-
-
-canvas {
+.answerPanel {
 
     position: fixed;
-
-    inset: 0;
-
-    width: 100%;
-
-    height: 100%;
-
-    display: block;
-
-}
-
-
-/* =================================
-   UI
-================================= */
-
-#ui {
-
-    position: fixed;
-
-    inset: 0;
-
-    z-index: 10;
-
-    pointer-events: none;
-
-}
-
-
-#header {
-
-    position: absolute;
-
-    top:
-        max(
-            12px,
-            env(safe-area-inset-top)
-        );
 
     left: 50%;
 
-    transform:
-        translateX(-50%);
+    bottom: 25px;
 
-    width:
-        calc(100% - 24px);
+    transform: translateX(-50%);
 
-    max-width: 500px;
+    width: min(90%, 360px);
 
-    padding: 11px;
+    padding: 16px;
 
-    border-radius: 16px;
+    background: rgba(5, 8, 20, 0.90);
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    border-radius: 18px;
+
+    backdrop-filter: blur(12px);
+
+    -webkit-backdrop-filter: blur(12px);
 
     text-align: center;
 
-    background:
-        rgba(0,0,0,0.70);
+    z-index: 100;
 
-    backdrop-filter:
-        blur(10px);
+    display: none;
 
 }
 
 
-.title {
+/* QUESTION */
+
+#questionText {
 
     font-size: 20px;
 
     font-weight: 700;
 
-}
-
-
-.subtitle {
-
-    font-size: 12px;
-
-    opacity: 0.7;
-
-    margin-top: 3px;
+    margin-bottom: 12px;
 
 }
 
 
-/* =================================
-   PANELS
-================================= */
+/* INPUT */
 
-.panel {
-
-    position: absolute;
-
-    top: 50%;
-
-    left: 50%;
-
-    transform:
-        translate(-50%, -50%);
-
-    width:
-        calc(100% - 32px);
-
-    max-width: 430px;
-
-    padding: 25px;
-
-    border-radius: 24px;
-
-    text-align: center;
-
-    background:
-        rgba(5,8,20,0.94);
-
-    backdrop-filter:
-        blur(15px);
-
-    box-shadow:
-        0 20px 60px
-        rgba(0,0,0,0.5);
-
-    pointer-events: auto;
-
-}
-
-
-.emoji {
-
-    font-size: 55px;
-
-}
-
-
-.panel h1 {
-
-    margin:
-        10px 0;
-
-}
-
-
-.panel p {
-
-    line-height: 1.5;
-
-    color: #d1d5db;
-
-}
-
-
-.small {
-
-    font-size: 14px;
-
-}
-
-
-/* =================================
-   BUTTON
-================================= */
-
-button {
+#answerInput {
 
     width: 100%;
 
-    padding: 15px;
+    box-sizing: border-box;
 
-    border: 0;
+    padding: 12px;
 
-    border-radius: 14px;
+    margin-bottom: 10px;
 
-    background:
-        #2563eb;
+    border-radius: 10px;
 
-    color: white;
+    border: none;
 
-    font-size: 17px;
-
-    font-weight: 700;
-
-    touch-action: manipulation;
-
-}
-
-
-button:active {
-
-    transform:
-        scale(0.97);
-
-}
-
-
-/* =================================
-   ERROR
-================================= */
-
-#errorMessage {
-
-    margin-top: 12px;
-
-    color: #fb7185;
-
-    font-size: 13px;
-
-}
-
-
-/* =================================
-   FLOATING PANELS
-================================= */
-
-.floatingPanel {
-
-    position: absolute;
-
-    left: 50%;
-
-    transform:
-        translateX(-50%);
-
-    width:
-        calc(100% - 28px);
-
-    max-width: 500px;
-
-    padding: 10px 14px;
-
-    border-radius: 15px;
+    outline: none;
 
     text-align: center;
 
-    background:
-        rgba(0,0,0,0.70);
+    font-size: 20px;
 
-    backdrop-filter:
-        blur(8px);
+    background: white;
 
-    pointer-events: none;
+    color: black;
 
 }
 
 
-#instruction {
+/* SUBMIT */
 
-    display: none;
+#submitAnswer {
 
-    top: 105px;
+    width: 100%;
 
-}
+    padding: 13px;
 
+    border: none;
 
-#instructionTitle {
+    border-radius: 10px;
 
-    font-size: 17px;
+    font-size: 16px;
 
-    font-weight: 700;
+    font-weight: bold;
 
-}
-
-
-#instructionText {
-
-    margin-top: 4px;
-
-    font-size: 13px;
-
-    color: #d1d5db;
+    cursor: pointer;
 
 }
 
 
-#gameInfo {
+/* MOBILE */
 
-    display: none;
+@media (max-width: 600px) {
 
-    top: 105px;
+    .answerPanel {
 
-    justify-content: space-between;
-
-}
-
-
-/* =================================
-   RESULTS
-================================= */
-
-#resultScreen {
-
-    display: none;
-
-}
-
-
-.resultRow {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    padding: 12px 0;
-
-    border-bottom:
-        1px solid
-        rgba(255,255,255,0.1);
-
-}
-
-
-.resultRow strong {
-
-    color: #60a5fa;
-
-}
-
-
-.cognitive {
-
-    margin-top: 18px;
-
-    padding: 14px;
-
-    border-radius: 14px;
-
-    text-align: left;
-
-    background:
-        rgba(37,99,235,0.15);
-
-}
-
-
-.cognitive p {
-
-    margin: 7px 0;
-
-}
-
-
-/* =================================
-   MOBILE
-================================= */
-
-@media (max-height: 700px) {
-
-    .panel {
-
-        padding: 20px;
-
-    }
-
-    .emoji {
-
-        font-size: 40px;
+        bottom: 15px;
 
     }
 
