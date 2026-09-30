@@ -7,7 +7,12 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0">
+        content="width=device-width,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 user-scalable=no">
+
+    <meta name="theme-color" content="#050814">
 
     <title>AR Cognitive Lab</title>
 
@@ -15,184 +20,260 @@
 
 </head>
 
+
 <body>
 
 
-<!-- ================================= -->
-<!-- CAMERA -->
-<!-- ================================= -->
+<!-- =========================================
+     CAMERA
+========================================= -->
 
 <video
     id="camera"
     autoplay
+    muted
     playsinline>
 </video>
 
 
-<!-- ================================= -->
-<!-- DARK OVERLAY -->
-<!-- ================================= -->
+<!-- =========================================
+     DARK CAMERA OVERLAY
+========================================= -->
 
-<div id="overlay"></div>
-
-
-<!-- ================================= -->
-<!-- MAIN APPLICATION -->
-<!-- ================================= -->
-
-<div id="app">
+<div id="cameraOverlay"></div>
 
 
-    <div id="header">
+<!-- =========================================
+     APPLICATION
+========================================= -->
 
-        <h1>🧠 AR Cognitive Lab</h1>
-
-        <p>
-            Markerless Cognitive Assessment
-        </p>
-
-    </div>
+<main id="app">
 
 
-    <!-- START SCREEN -->
+    <!-- =====================================
+         HEADER
+    ====================================== -->
 
-    <div id="startScreen">
+    <header id="header">
 
-        <div class="card">
+        <div class="logo">
+            🧠 AR Cognitive Lab
+        </div>
 
-            <h2>
-                Visual Attention Test
-            </h2>
+        <div class="subtitle">
+            Catch the Target
+        </div>
+
+    </header>
+
+
+    <!-- =====================================
+         START SCREEN
+    ====================================== -->
+
+    <section id="startScreen">
+
+        <div class="panel">
+
+            <div class="brain">
+                🧠
+            </div>
+
+            <h1>
+                Catch the Target
+            </h1>
 
             <p>
-                The camera will open and
-                virtual objects will appear.
+                A visual attention and
+                reaction-time experiment.
             </p>
 
-            <p>
-                Identify the correct color
-                as quickly as possible.
+            <p class="smallText">
+
+                Virtual objects will appear
+                over your camera view.
+
+                Find the requested object
+                and tap it as quickly as possible.
+
             </p>
 
             <button id="startButton">
+
                 📷 Start Camera
+
             </button>
 
+            <p id="cameraError"></p>
+
         </div>
 
-    </div>
+    </section>
 
 
-    <!-- TEST SCREEN -->
+    <!-- =====================================
+         GAME SCREEN
+    ====================================== -->
 
-    <div id="testScreen">
+    <section id="gameScreen">
 
-        <div id="trialInfo">
-            Trial 1 / 5
+
+        <!-- Trial information -->
+
+        <div id="topInfo">
+
+            <span id="trialText">
+                Trial 1 / 10
+            </span>
+
+            <span id="scoreText">
+                Score: 0
+            </span>
+
         </div>
 
 
-        <!-- AR VIRTUAL OBJECT -->
+        <!-- =================================
+             INSTRUCTION
+        ================================== -->
 
-        <div id="arObject">
+        <div id="instructionBox">
 
-            <div id="circle"></div>
+            <div class="instructionSmall">
+                FIND AND TAP
+            </div>
 
-            <div id="word">
-                RED
+            <div id="targetInstruction">
+                THE RED ORB
             </div>
 
         </div>
 
 
-        <!-- QUESTION -->
+        <!-- =================================
+             VIRTUAL AR OBJECTS
+        ================================== -->
 
-        <div id="questionBox">
-
-            <h2>
-                What is the color?
-            </h2>
-
-            <p id="instruction">
-                Select the ink color
-            </p>
+        <div id="orbContainer"></div>
 
 
-            <!-- ANSWERS -->
-
-            <div id="answers">
-
-                <button
-                    class="answer"
-                    data-color="red">
-
-                    RED
-
-                </button>
-
-
-                <button
-                    class="answer"
-                    data-color="blue">
-
-                    BLUE
-
-                </button>
-
-
-                <button
-                    class="answer"
-                    data-color="green">
-
-                    GREEN
-
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- FEEDBACK -->
+        <!-- =================================
+             FEEDBACK
+        ================================== -->
 
         <div id="feedback"></div>
 
-    </div>
+
+        <!-- =================================
+             BOTTOM INFO
+        ================================== -->
+
+        <div id="bottomInfo">
+
+            <span>
+                Tap the target
+            </span>
+
+        </div>
+
+    </section>
 
 
-    <!-- RESULT SCREEN -->
+    <!-- =====================================
+         RESULT SCREEN
+    ====================================== -->
 
-    <div id="resultScreen">
+    <section id="resultScreen">
 
-        <div class="resultCard">
+        <div class="resultPanel">
+
+            <div class="resultIcon">
+                🧠
+            </div>
 
             <h1>
-                🧠 Test Complete
+                Test Complete
             </h1>
 
-            <p id="finalAccuracy"></p>
+            <div class="resultItem">
 
-            <p id="finalTime"></p>
+                <span>
+                    Accuracy
+                </span>
 
-            <p id="finalCorrect"></p>
+                <strong id="accuracyResult">
+                    0%
+                </strong>
 
-            <hr>
+            </div>
 
-            <p>
-                Cognitive Functions Tested
-            </p>
 
-            <ul>
+            <div class="resultItem">
 
-                <li>Visual Attention</li>
+                <span>
+                    Correct Responses
+                </span>
 
-                <li>Response Inhibition</li>
+                <strong id="correctResult">
+                    0 / 10
+                </strong>
 
-                <li>Decision Making</li>
+            </div>
 
-                <li>Reaction Time</li>
 
-            </ul>
+            <div class="resultItem">
+
+                <span>
+                    Average Reaction
+                </span>
+
+                <strong id="reactionResult">
+                    0.00 sec
+                </strong>
+
+            </div>
+
+
+            <div class="resultItem">
+
+                <span>
+                    Fastest Response
+                </span>
+
+                <strong id="fastestResult">
+                    0.00 sec
+                </strong>
+
+            </div>
+
+
+            <div class="cognitiveBox">
+
+                <strong>
+                    Cognitive Functions
+                </strong>
+
+                <ul>
+
+                    <li>
+                        Visual Attention
+                    </li>
+
+                    <li>
+                        Visual Search
+                    </li>
+
+                    <li>
+                        Reaction Time
+                    </li>
+
+                    <li>
+                        Decision Making
+                    </li>
+
+                </ul>
+
+            </div>
 
 
             <button id="restartButton">
@@ -203,9 +284,10 @@
 
         </div>
 
-    </div>
+    </section>
 
-</div>
+
+</main>
 
 
 <script src="app.js"></script>
