@@ -1,70 +1,84 @@
 let currentSequence = "";
 let startTime = 0;
 
-const startButton =
-    document.getElementById("startButton");
+const startButton = document.getElementById("startButton");
+const submitButton = document.getElementById("submitButton");
 
-const submitButton =
-    document.getElementById("submitButton");
+const sequence = document.getElementById("sequence");
+const answer = document.getElementById("answer");
+const result = document.getElementById("result");
+const instruction = document.getElementById("instruction");
 
-const sequence =
-    document.getElementById("sequence");
-
-const answer =
-    document.getElementById("answer");
-
-const result =
-    document.getElementById("result");
-
-const instruction =
-    document.getElementById("instruction");
+const marker = document.getElementById("hiroMarker");
 
 
-/*
-    Generate random memory sequence
-*/
+// ================================
+// MARKER DETECTION
+// ================================
+
+marker.addEventListener("markerFound", function () {
+
+    instruction.innerText =
+        "✅ Marker detected! You can start the test.";
+
+    sequence.innerText =
+        "Ready";
+
+});
+
+
+marker.addEventListener("markerLost", function () {
+
+    instruction.innerText =
+        "📷 Point the camera at the Hiro marker.";
+
+    sequence.innerText =
+        "Waiting for marker...";
+
+});
+
+
+// ================================
+// RANDOM MEMORY SEQUENCE
+// ================================
 
 function generateSequence(length = 5) {
 
-    let result = "";
+    let value = "";
 
     for (let i = 0; i < length; i++) {
 
-        result += Math.floor(Math.random() * 10);
+        value += Math.floor(Math.random() * 10);
 
     }
 
-    return result;
+    return value;
 }
 
 
-/*
-    Start cognitive test
-*/
+// ================================
+// START TEST
+// ================================
 
-startButton.addEventListener("click", () => {
+startButton.addEventListener("click", function () {
 
     currentSequence = generateSequence(5);
 
     answer.value = "";
 
-    result.innerText = "";
+    result.innerHTML = "";
+
+    sequence.innerText = currentSequence;
 
     instruction.innerText =
-        "Memorize the sequence!";
-
-    sequence.innerText =
-        currentSequence;
+        "🧠 Memorize the sequence!";
 
 
-    /*
-        Show sequence for 3 seconds
-    */
+    // Show sequence for 3 seconds
 
-    setTimeout(() => {
+    setTimeout(function () {
 
-        sequence.innerText =
-            "?????";
+        sequence.innerText = "?????";
 
         instruction.innerText =
             "Enter the sequence you remember.";
@@ -76,14 +90,24 @@ startButton.addEventListener("click", () => {
 });
 
 
-/*
-    Submit answer
-*/
+// ================================
+// SUBMIT ANSWER
+// ================================
 
-submitButton.addEventListener("click", () => {
+submitButton.addEventListener("click", function () {
 
     const userAnswer =
         answer.value.trim();
+
+    if (currentSequence === "") {
+
+        result.innerText =
+            "Start the memory test first.";
+
+        return;
+
+    }
+
 
     const reactionTime =
         ((performance.now() - startTime) / 1000)
@@ -98,10 +122,12 @@ submitButton.addEventListener("click", () => {
             reactionTime +
             " seconds";
 
-    } else {
+    }
+
+    else {
 
         result.innerHTML =
-            "❌ Incorrect.<br>" +
+            "❌ Incorrect!<br>" +
             "Correct sequence: " +
             currentSequence +
             "<br>" +
