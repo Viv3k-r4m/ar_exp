@@ -2,14 +2,12 @@ import * as THREE from
     "three";
 
 
-// ============================================
-// GLOBAL VARIABLES
-// ============================================
-
-let camera;
+// ======================================================
+// THREE.JS
+// ======================================================
 
 let scene;
-
+let camera;
 let renderer;
 
 let controller;
@@ -18,25 +16,26 @@ let reticle;
 
 let xrSession = null;
 
+let viewerSpace = null;
+
+let localFloorSpace = null;
+
 let hitTestSource = null;
 
-let hitTestSourceRequested = false;
-
-let referenceSpace = null;
+let hitTestReady = false;
 
 
-// AR game group
+// ======================================================
+// AR GAME
+// ======================================================
 
 let gameGroup = null;
 
+let placed = false;
 
-// ============================================
-// GAME VARIABLES
-// ============================================
+let gameStarted = false;
 
-const TOTAL_TRIALS = 10;
-
-const ORB_COUNT = 6;
+let waitingForNext = false;
 
 let currentTrial = 0;
 
@@ -48,16 +47,14 @@ let trialStartTime = 0;
 
 let reactionTimes = [];
 
-let gameStarted = false;
+const TOTAL_TRIALS = 10;
 
-let placed = false;
-
-let waitingForNext = false;
+const ORB_COUNT = 6;
 
 
-// ============================================
+// ======================================================
 // COLORS
-// ============================================
+// ======================================================
 
 const COLORS = {
 
@@ -75,14 +72,13 @@ const COLORS = {
 
 };
 
-
 const COLOR_NAMES =
     Object.keys(COLORS);
 
 
-// ============================================
+// ======================================================
 // HTML ELEMENTS
-// ============================================
+// ======================================================
 
 const startScreen =
     document.getElementById(
@@ -160,27 +156,18 @@ const restartButton =
     );
 
 
-// ============================================
-// INITIALIZE THREE.JS
-// ============================================
+// ======================================================
+// INITIALIZE
+// ======================================================
 
 init();
 
 
 function init() {
 
-
-    // -------------------------------
-    // Scene
-    // -------------------------------
-
     scene =
         new THREE.Scene();
 
-
-    // -------------------------------
-    // Camera
-    // -------------------------------
 
     camera =
         new THREE.PerspectiveCamera(
@@ -192,15 +179,16 @@ function init() {
         );
 
 
-    // -------------------------------
-    // Renderer
-    // -------------------------------
-
     renderer =
         new THREE.WebGLRenderer({
+
             antialias: true,
+
             alpha: true,
-            preserveDrawingBuffer: false
+
+            powerPreference:
+                "high-performance"
+
         });
 
 
@@ -221,6 +209,11 @@ function init() {
     renderer.xr.enabled = true;
 
 
+    /*
+     * Use local-floor as the main
+     * world reference space.
+     */
+
     renderer.xr.setReferenceSpaceType(
         "local-floor"
     );
@@ -231,52 +224,43 @@ function init() {
     );
 
 
-    // -------------------------------
     // Lighting
-    // -------------------------------
 
-    const ambientLight =
+    const ambient =
         new THREE.HemisphereLight(
             0xffffff,
             0x444444,
             2
         );
 
-
     scene.add(
-        ambientLight
+        ambient
     );
 
 
-    const directionalLight =
+    const light =
         new THREE.DirectionalLight(
             0xffffff,
             2
         );
 
-
-    directionalLight.position.set(
+    light.position.set(
         2,
         4,
         2
     );
 
-
     scene.add(
-        directionalLight
+        light
     );
 
 
-    // -------------------------------
     // Reticle
-    // -------------------------------
 
     createReticle();
 
 
-    // -------------------------------
-    // Controller
-    // -------------------------------
+    // XR controller
 
     controller =
         renderer.xr.getController(0);
@@ -293,48 +277,33 @@ function init() {
     );
 
 
-    // -------------------------------
-    // Resize
-    // -------------------------------
-
     window.addEventListener(
         "resize",
-        onWindowResize
+        onResize
     );
 
-
-    // -------------------------------
-    // Render
-    // -------------------------------
 
     renderer.setAnimationLoop(
         render
     );
 
 
-    // -------------------------------
-    // Check WebXR
-    // -------------------------------
-
     checkARSupport();
 
 }
 
 
-// ============================================
-// CHECK AR SUPPORT
-// ============================================
+// ======================================================
+// CHECK WEBXR
+// ======================================================
 
 async function checkARSupport() {
 
     if (!navigator.xr) {
 
-        startButton.disabled =
-            true;
-
-        errorMessage.innerText =
-            "WebXR AR is not supported " +
-            "by this browser/device.";
+        disableAR(
+            "WebXR is not available in this browser."
+        );
 
         return;
 
@@ -344,19 +313,17 @@ async function checkARSupport() {
     try {
 
         const supported =
-            await navigator.xr.isSessionSupported(
-                "immersive-ar"
-            );
+            await navigator.xr
+                .isSessionSupported(
+                    "immersive-ar"
+                );
 
 
         if (!supported) {
 
-            startButton.disabled =
-                true;
-
-            errorMessage.innerText =
-                "This device/browser does not " +
-                "support immersive AR.";
+            disableAR(
+                "Immersive AR is not supported on this device/browser."
+            );
 
         }
 
@@ -366,36 +333,63 @@ async function checkARSupport() {
 
         console.error(error);
 
-        startButton.disabled =
-            true;
-
-        errorMessage.innerText =
-            "Unable to check AR support.";
+        disableAR(
+            "Unable to check AR support."
+        );
 
     }
 
 }
 
 
-// ============================================
-// CREATE RETICLE
-// ============================================
+// ======================================================
+// DISABLE BUTTON
+// ======================================================
+
+function disableAR(
+    message
+) {
+
+    startButton.disabled =
+        true;
+
+    startButton.style.opacity =
+        "0.5";
+
+    errorMessage.innerText =
+        message;
+
+}
+
+
+// ======================================================
+// RETICLE
+// ======================================================
 
 function createReticle() {
 
+    const geometry =
+        new THREE.RingGeometry(
+            0.08,
+            0.10,
+            32
+        );
+
+
+    const material =
+        new THREE.MeshBasicMaterial({
+
+            color: 0x00ff88,
+
+            side: THREE.DoubleSide
+
+        });
+
+
     reticle =
         new THREE.Mesh(
-
-            new THREE.RingGeometry(
-                0.08,
-                0.10,
-                32
-            ),
-
-            new THREE.MeshBasicMaterial({
-                color: 0x00ff88
-            })
-
+            geometry,
+            material
         );
 
 
@@ -418,66 +412,126 @@ function createReticle() {
 }
 
 
-// ============================================
+// ======================================================
 // START AR
-// ============================================
+// ======================================================
 
 async function startAR() {
 
-    errorMessage.innerText = "";
-
-
-    if (!navigator.xr) {
-
-        showError(
-            "WebXR is not supported."
-        );
-
-        return;
-
-    }
+    errorMessage.innerText =
+        "";
 
 
     try {
 
+        /*
+         * Request AR session.
+         */
+
         xrSession =
-            await navigator.xr.requestSession(
-                "immersive-ar",
-                {
+            await navigator.xr
+                .requestSession(
+                    "immersive-ar",
+                    {
 
-                    requiredFeatures: [
-                        "hit-test",
-                        "local-floor"
-                    ],
+                        requiredFeatures: [
+                            "hit-test"
+                        ],
 
-                    optionalFeatures: [
-                        "dom-overlay"
-                    ],
+                        optionalFeatures: [
+                            "local-floor",
+                            "dom-overlay"
+                        ],
 
-                    domOverlay: {
-                        root:
-                            document.body
+                        domOverlay: {
+                            root:
+                                document.body
+                        }
+
                     }
-
-                }
-            );
+                );
 
 
-        renderer.xr.setSession(
+        /*
+         * Give session to Three.js.
+         */
+
+        await renderer.xr.setSession(
             xrSession
         );
 
 
         /*
-         * Reset
+         * IMPORTANT:
+         *
+         * Request reference spaces ONCE.
+         */
+
+        viewerSpace =
+            await xrSession
+                .requestReferenceSpace(
+                    "viewer"
+                );
+
+
+        try {
+
+            localFloorSpace =
+                await xrSession
+                    .requestReferenceSpace(
+                        "local-floor"
+                    );
+
+        }
+
+        catch {
+
+            /*
+             * Fallback.
+             */
+
+            localFloorSpace =
+                await xrSession
+                    .requestReferenceSpace(
+                        "local"
+                    );
+
+        }
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Request hit test source ONCE.
+         */
+
+        hitTestSource =
+            await xrSession
+                .requestHitTestSource({
+
+                    space:
+                        viewerSpace
+
+                });
+
+
+        hitTestReady =
+            true;
+
+
+        /*
+         * Reset state.
          */
 
         placed = false;
 
         gameStarted = false;
 
-        hitTestSourceRequested =
-            false;
+        currentTrial = 0;
+
+        score = 0;
+
+        reactionTimes = [];
 
 
         /*
@@ -492,13 +546,17 @@ async function startAR() {
             "block";
 
 
+        gameInfo.style.display =
+            "none";
+
+
         instructionTitle.innerText =
-            "Find a surface";
+            "🔍 FIND A SURFACE";
 
 
         instructionText.innerText =
-            "Move your phone slowly " +
-            "until the green reticle appears.";
+            "Slowly move your phone over " +
+            "the floor or a table.";
 
 
         /*
@@ -510,20 +568,21 @@ async function startAR() {
             onSessionEnd
         );
 
+
     }
 
     catch (error) {
 
         console.error(
-            "AR start error:",
+            "AR ERROR:",
             error
         );
 
 
         showError(
-            "Unable to start AR. " +
-            "Make sure camera permission " +
-            "is allowed and try again."
+            getReadableError(
+                error
+            )
         );
 
     }
@@ -531,16 +590,70 @@ async function startAR() {
 }
 
 
-// ============================================
-// AR SELECT EVENT
-// ============================================
+// ======================================================
+// READABLE ERROR
+// ======================================================
+
+function getReadableError(
+    error
+) {
+
+    if (
+        error.name ===
+        "NotAllowedError"
+    ) {
+
+        return (
+            "AR permission was denied. " +
+            "Allow camera/motion access and try again."
+        );
+
+    }
+
+
+    if (
+        error.name ===
+        "NotSupportedError"
+    ) {
+
+        return (
+            "This device does not support " +
+            "the required AR features."
+        );
+
+    }
+
+
+    if (
+        error.name ===
+        "SecurityError"
+    ) {
+
+        return (
+            "AR requires HTTPS. " +
+            "Open the GitHub Pages HTTPS URL."
+        );
+
+    }
+
+
+    return (
+        "Could not start AR: " +
+        error.message
+    );
+
+}
+
+
+// ======================================================
+// SCREEN TAP / XR SELECT
+// ======================================================
 
 function onSelect() {
 
-
     /*
      * First tap:
-     * Place the AR game.
+     * place the AR game.
      */
 
     if (!placed) {
@@ -548,6 +661,13 @@ function onSelect() {
         if (
             !reticle.visible
         ) {
+
+            instructionTitle.innerText =
+                "❗ NO SURFACE FOUND";
+
+            instructionText.innerText =
+                "Move your phone slowly " +
+                "over a textured floor or table.";
 
             return;
 
@@ -562,23 +682,24 @@ function onSelect() {
 
 
     /*
-     * After placement:
-     * Check whether user tapped
-     * an AR target.
+     * Game tap.
      */
 
-    if (gameStarted) {
+    if (
+        gameStarted &&
+        !waitingForNext
+    ) {
 
-        checkTargetTap();
+        checkTarget();
 
     }
 
 }
 
 
-// ============================================
+// ======================================================
 // PLACE GAME
-// ============================================
+// ======================================================
 
 function placeGame() {
 
@@ -586,15 +707,20 @@ function placeGame() {
 
 
     /*
-     * Hide reticle
+     * Save reticle matrix
+     * BEFORE hiding it.
      */
+
+    const placementMatrix =
+        reticle.matrix.clone();
+
 
     reticle.visible =
         false;
 
 
     /*
-     * Create game group
+     * Create game group.
      */
 
     gameGroup =
@@ -602,14 +728,17 @@ function placeGame() {
 
 
     /*
-     * Place group exactly
-     * where reticle was.
+     * Convert matrix to position.
      */
 
     gameGroup.position.setFromMatrixPosition(
-        reticle.matrix
+        placementMatrix
     );
 
+
+    /*
+     * Keep arena level.
+     */
 
     gameGroup.rotation.set(
         0,
@@ -623,81 +752,62 @@ function placeGame() {
     );
 
 
-    /*
-     * Create subtle platform
-     */
-
     createArena();
 
 
-    /*
-     * UI
-     */
-
     instructionTitle.innerText =
-        "AR GAME READY";
+        "🎯 AR GAME READY";
 
 
     instructionText.innerText =
-        "Tap the requested orb.";
+        "Find and tap the requested orb.";
 
 
     gameInfo.style.display =
         "flex";
 
 
-    /*
-     * Start game
-     */
-
     setTimeout(
-        () => {
-
-            startGame();
-
-        },
-        700
+        startGame,
+        500
     );
 
 }
 
 
-// ============================================
-// CREATE ARENA
-// ============================================
+// ======================================================
+// ARENA
+// ======================================================
 
 function createArena() {
 
-
-    const geometry =
+    const platformGeometry =
         new THREE.CylinderGeometry(
-            0.7,
-            0.7,
+            0.65,
+            0.65,
             0.025,
             48
         );
 
 
-    const material =
+    const platformMaterial =
         new THREE.MeshStandardMaterial({
 
-            color: 0x16213e,
+            color: 0x111a35,
 
             transparent: true,
 
-            opacity: 0.75,
+            opacity: 0.8,
 
-            roughness: 0.5,
-
-            metalness: 0.2
+            roughness: 0.4
 
         });
 
 
     const platform =
         new THREE.Mesh(
-            geometry,
-            material
+            platformGeometry,
+            platformMaterial
         );
 
 
@@ -711,21 +821,21 @@ function createArena() {
 
 
     /*
-     * Ring around arena
+     * Outer ring.
      */
 
     const ring =
         new THREE.Mesh(
 
             new THREE.TorusGeometry(
-                0.7,
-                0.015,
+                0.65,
+                0.012,
                 16,
                 64
             ),
 
             new THREE.MeshBasicMaterial({
-                color: 0x00ddff
+                color: 0x00eaff
             })
 
         );
@@ -746,11 +856,13 @@ function createArena() {
 }
 
 
-// ============================================
+// ======================================================
 // START GAME
-// ============================================
+// ======================================================
 
 function startGame() {
+
+    gameStarted = true;
 
     currentTrial = 0;
 
@@ -758,7 +870,6 @@ function startGame() {
 
     reactionTimes = [];
 
-    gameStarted = true;
 
     scoreText.innerText =
         "Score: 0";
@@ -769,9 +880,9 @@ function startGame() {
 }
 
 
-// ============================================
+// ======================================================
 // NEXT TRIAL
-// ============================================
+// ======================================================
 
 function nextTrial() {
 
@@ -789,22 +900,20 @@ function nextTrial() {
 
     currentTrial++;
 
-    waitingForNext = false;
+
+    waitingForNext =
+        false;
 
 
     trialText.innerText =
         `Trial ${currentTrial} / ${TOTAL_TRIALS}`;
 
 
-    /*
-     * Remove previous orbs
-     */
-
     removeOrbs();
 
 
     /*
-     * Random target
+     * Select target.
      */
 
     targetColor =
@@ -817,23 +926,15 @@ function nextTrial() {
 
 
     instructionTitle.innerText =
-        `CATCH THE ${targetColor} ORB`;
+        `🎯 CATCH THE ${targetColor} ORB`;
 
 
     instructionText.innerText =
-        "Tap the correct glowing orb";
+        "Tap the correct glowing orb.";
 
-
-    /*
-     * Create new objects
-     */
 
     createOrbs();
 
-
-    /*
-     * Start timer
-     */
 
     trialStartTime =
         performance.now();
@@ -841,9 +942,9 @@ function nextTrial() {
 }
 
 
-// ============================================
+// ======================================================
 // REMOVE ORBS
-// ============================================
+// ======================================================
 
 function removeOrbs() {
 
@@ -854,19 +955,19 @@ function removeOrbs() {
     }
 
 
-    const remove = [];
+    const objects = [];
 
 
     gameGroup.children.forEach(
-        object => {
+        child => {
 
             if (
-                object.userData &&
-                object.userData.isOrb
+                child.userData &&
+                child.userData.orb
             ) {
 
-                remove.push(
-                    object
+                objects.push(
+                    child
                 );
 
             }
@@ -875,7 +976,7 @@ function removeOrbs() {
     );
 
 
-    remove.forEach(
+    objects.forEach(
         object => {
 
             gameGroup.remove(
@@ -893,18 +994,17 @@ function removeOrbs() {
 }
 
 
-// ============================================
+// ======================================================
 // CREATE ORBS
-// ============================================
+// ======================================================
 
 function createOrbs() {
-
 
     const positions = [];
 
 
     /*
-     * Target is first
+     * Create target first.
      */
 
     createOrb(
@@ -915,7 +1015,7 @@ function createOrbs() {
 
 
     /*
-     * Distractors
+     * Create distractors.
      */
 
     for (
@@ -956,20 +1056,15 @@ function createOrbs() {
 }
 
 
-// ============================================
-// CREATE ONE ORB
-// ============================================
+// ======================================================
+// CREATE ORB
+// ======================================================
 
 function createOrb(
     colorName,
-    isTarget,
+    target,
     positions
 ) {
-
-
-    /*
-     * Find non-overlapping position
-     */
 
     let x;
 
@@ -978,6 +1073,11 @@ function createOrb(
     let valid = false;
 
 
+    /*
+     * Find a position without
+     * excessive overlap.
+     */
+
     for (
         let attempt = 0;
         attempt < 100;
@@ -985,29 +1085,33 @@ function createOrb(
     ) {
 
         x =
-            -0.48 +
+            -0.45 +
             Math.random() *
-            0.96;
+            0.90;
 
 
         z =
-            -0.48 +
+            -0.45 +
             Math.random() *
-            0.96;
+            0.90;
 
 
         valid = true;
 
 
         for (
-            const p of positions
+            const position
+            of positions
         ) {
 
             const dx =
-                x - p.x;
+                x -
+                position.x;
+
 
             const dz =
-                z - p.z;
+                z -
+                position.z;
 
 
             const distance =
@@ -1018,7 +1122,7 @@ function createOrb(
 
 
             if (
-                distance < 0.23
+                distance < 0.20
             ) {
 
                 valid = false;
@@ -1046,12 +1150,14 @@ function createOrb(
 
 
     /*
-     * Sphere
+     * Sphere.
      */
 
     const geometry =
         new THREE.SphereGeometry(
-            0.07,
+            target
+                ? 0.085
+                : 0.065,
             32,
             32
         );
@@ -1067,13 +1173,13 @@ function createOrb(
                 COLORS[colorName],
 
             emissiveIntensity:
-                isTarget
-                    ? 0.9
+                target
+                    ? 1.2
                     : 0.35,
 
-            metalness: 0.15,
+            roughness: 0.2,
 
-            roughness: 0.25
+            metalness: 0.15
 
         });
 
@@ -1087,33 +1193,14 @@ function createOrb(
 
     orb.position.set(
         x,
-        0.13,
+        target
+            ? 0.15
+            : 0.12,
         z
     );
 
 
-    /*
-     * Target is slightly larger
-     */
-
-    const scale =
-        isTarget
-            ? 1.3
-            : 1;
-
-
-    orb.scale.set(
-        scale,
-        scale,
-        scale
-    );
-
-
-    /*
-     * Metadata for interaction
-     */
-
-    orb.userData.isOrb =
+    orb.userData.orb =
         true;
 
 
@@ -1121,96 +1208,82 @@ function createOrb(
         colorName;
 
 
-    orb.userData.isTarget =
-        isTarget;
+    orb.userData.target =
+        target;
 
-
-    /*
-     * Add to scene
-     */
 
     gameGroup.add(
         orb
     );
 
-
-    /*
-     * Animate
-     */
-
-    orb.userData.baseY =
-        orb.position.y;
-
 }
 
 
-// ============================================
+// ======================================================
 // CHECK TARGET
-// ============================================
+// ======================================================
 
-function checkTargetTap() {
-
-
-    if (
-        waitingForNext
-    ) {
-
-        return;
-
-    }
-
+function checkTarget() {
 
     /*
-     * WebXR select event
-     *
-     * Use controller ray to determine
-     * where the user tapped.
+     * On a phone,
+     * XR select gives us the
+     * target ray from the screen tap.
      */
 
-    const tempMatrix =
-        new THREE.Matrix4();
-
-
-    tempMatrix.identity()
-        .extractRotation(
-            controller.matrixWorld
-        );
-
-
-    const raycaster =
+    const ray =
         new THREE.Raycaster();
 
 
-    raycaster.ray.origin
-        .setFromMatrixPosition(
-            controller.matrixWorld
-        );
+    const origin =
+        new THREE.Vector3();
 
 
-    raycaster.ray.direction
-        .set(
-            0,
-            0,
-            -1
-        )
-        .applyMatrix4(
-            tempMatrix
-        );
+    const direction =
+        new THREE.Vector3();
+
+
+    /*
+     * Controller target-ray
+     * world transform.
+     */
+
+    controller.getWorldPosition(
+        origin
+    );
+
+
+    direction.set(
+        0,
+        0,
+        -1
+    );
+
+
+    direction.applyQuaternion(
+        controller.quaternion
+    );
+
+
+    ray.set(
+        origin,
+        direction
+    );
 
 
     const orbs = [];
 
 
     gameGroup.children.forEach(
-        object => {
+        child => {
 
             if (
-                object.userData &&
-                object.userData.isOrb
+                child.userData &&
+                child.userData.orb
             ) {
 
                 orbs.push(
-                    object
+                    child
                 );
 
             }
@@ -1219,15 +1292,15 @@ function checkTargetTap() {
     );
 
 
-    const hits =
-        raycaster.intersectObjects(
+    const intersections =
+        ray.intersectObjects(
             orbs,
             false
         );
 
 
     if (
-        hits.length === 0
+        intersections.length === 0
     ) {
 
         return;
@@ -1236,7 +1309,7 @@ function checkTargetTap() {
 
 
     const selected =
-        hits[0].object;
+        intersections[0].object;
 
 
     processAnswer(
@@ -1246,21 +1319,17 @@ function checkTargetTap() {
 }
 
 
-// ============================================
-// PROCESS ANSWER
-// ============================================
+// ======================================================
+// ANSWER
+// ======================================================
 
 function processAnswer(
     selected
 ) {
 
+    waitingForNext =
+        true;
 
-    waitingForNext = true;
-
-
-    /*
-     * Reaction time
-     */
 
     const reaction =
         (
@@ -1275,10 +1344,6 @@ function processAnswer(
     );
 
 
-    /*
-     * Check target
-     */
-
     const correct =
         selected.userData.color ===
         targetColor;
@@ -1288,48 +1353,46 @@ function processAnswer(
 
         score++;
 
+
         scoreText.innerText =
             `Score: ${score}`;
 
 
-        /*
-         * Visual effect
-         */
-
-        selected.material.emissiveIntensity =
-            3;
-
-
-        selected.scale.multiplyScalar(
-            1.8
-        );
-
-
         instructionTitle.innerText =
-            "✓ CORRECT";
+            "✅ CORRECT";
 
 
         instructionText.innerText =
-            `${reaction.toFixed(2)} seconds`;
+            `Reaction time: ${
+                reaction.toFixed(2)
+            } seconds`;
+
+
+        /*
+         * Make target grow.
+         */
+
+        selected.scale.setScalar(
+            2
+        );
 
     }
 
     else {
 
         instructionTitle.innerText =
-            "✕ WRONG";
+            "❌ WRONG";
 
 
         instructionText.innerText =
-            `That was ${selected.userData.color}. ` +
-            `Find ${targetColor}.`;
+            `You tapped ${
+                selected.userData.color
+            }. Find ${
+                targetColor
+            }.`;
 
     }
 
-
-    /*
-     * Next component
-     */
 
     setTimeout(
         () => {
@@ -1337,19 +1400,20 @@ function processAnswer(
             nextTrial();
 
         },
-        700
+        650
     );
 
 }
 
 
-// ============================================
-// FINISH GAME
-// ============================================
+// ======================================================
+// RESULT
+// ======================================================
 
 function finishGame() {
 
-    gameStarted = false;
+    gameStarted =
+        false;
 
 
     removeOrbs();
@@ -1408,17 +1472,19 @@ function finishGame() {
 }
 
 
-// ============================================
-// HIT TEST
-// ============================================
+// ======================================================
+// HIT TEST FRAME
+// ======================================================
 
-async function requestHitTestSource(
+function updateHitTest(
     frame
 ) {
 
-
     if (
-        hitTestSourceRequested
+        !hitTestReady ||
+        !hitTestSource ||
+        !localFloorSpace ||
+        placed
     ) {
 
         return;
@@ -1426,138 +1492,97 @@ async function requestHitTestSource(
     }
 
 
-    const session =
-        renderer.xr.getSession();
+    const results =
+        frame.getHitTestResults(
+            hitTestSource
+        );
 
 
-    if (!session) {
+    if (
+        results.length === 0
+    ) {
+
+        reticle.visible =
+            false;
+
+        instructionTitle.innerText =
+            "🔍 FIND A SURFACE";
+
+        instructionText.innerText =
+            "Move your phone slowly " +
+            "over the floor or table.";
 
         return;
 
     }
 
 
-    referenceSpace =
-        await session.requestReferenceSpace(
-            "viewer"
+    const hit =
+        results[0];
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Pose is calculated against
+     * localFloorSpace.
+     */
+
+    const pose =
+        hit.getPose(
+            localFloorSpace
         );
 
 
-    hitTestSource =
-        await session.requestHitTestSource({
-            space:
-                referenceSpace
-        });
+    if (!pose) {
+
+        reticle.visible =
+            false;
+
+        return;
+
+    }
 
 
-    hitTestSourceRequested =
+    reticle.visible =
         true;
 
 
-    session.addEventListener(
-        "end",
-        () => {
-
-            hitTestSourceRequested =
-                false;
-
-            hitTestSource =
-                null;
-
-            referenceSpace =
-                null;
-
-        }
+    reticle.matrix.fromArray(
+        pose.transform.matrix
     );
+
+
+    instructionTitle.innerText =
+        "🟢 SURFACE FOUND";
+
+
+    instructionText.innerText =
+        "Tap the screen to place the game.";
 
 }
 
 
-// ============================================
-// RENDER
-// ============================================
+// ======================================================
+// RENDER LOOP
+// ======================================================
 
 function render(
-    timestamp,
+    time,
     frame
 ) {
 
-
     if (frame) {
 
-        const session =
-            renderer.xr.getSession();
-
-
-        /*
-         * Request hit test
-         */
-
-        requestHitTestSource(
+        updateHitTest(
             frame
         );
-
-
-        /*
-         * Surface detection
-         */
-
-        if (
-            hitTestSource &&
-            referenceSpace &&
-            !placed
-        ) {
-
-            const hitTestResults =
-                frame.getHitTestResults(
-                    hitTestSource
-                );
-
-
-            if (
-                hitTestResults.length > 0
-            ) {
-
-                const hit =
-                    hitTestResults[0];
-
-
-                const pose =
-                    hit.getPose(
-                        renderer
-                            .xr
-                            .getReferenceSpace()
-                    );
-
-
-                if (pose) {
-
-                    reticle.visible =
-                        true;
-
-
-                    reticle.matrix.fromArray(
-                        pose.transform.matrix
-                    );
-
-                }
-
-            }
-
-            else {
-
-                reticle.visible =
-                    false;
-
-            }
-
-        }
 
     }
 
 
     /*
-     * Animate AR objects
+     * Animate orbs.
      */
 
     if (gameGroup) {
@@ -1567,24 +1592,25 @@ function render(
 
                 if (
                     object.userData &&
-                    object.userData.isOrb
+                    object.userData.orb
                 ) {
 
                     object.rotation.y +=
-                        0.02;
+                        0.025;
+
+
+                    const base =
+                        object.userData.target
+                            ? 0.15
+                            : 0.12;
 
 
                     object.position.y =
-                        object.userData.baseY
-                        +
+                        base +
                         Math.sin(
-                            timestamp *
-                            0.003
-                            +
-                            object.position.x
-                            * 5
-                        )
-                        * 0.015;
+                            time * 0.003 +
+                            object.position.x * 5
+                        ) * 0.015;
 
                 }
 
@@ -1602,30 +1628,43 @@ function render(
 }
 
 
-// ============================================
+// ======================================================
 // SESSION END
-// ============================================
+// ======================================================
 
 function onSessionEnd() {
-
-    xrSession =
-        null;
-
 
     hitTestSource =
         null;
 
+    viewerSpace =
+        null;
 
-    hitTestSourceRequested =
+    localFloorSpace =
+        null;
+
+    hitTestReady =
         false;
 
+    xrSession =
+        null;
 
     placed =
         false;
 
-
     gameStarted =
         false;
+
+
+    if (gameGroup) {
+
+        scene.remove(
+            gameGroup
+        );
+
+        gameGroup = null;
+
+    }
 
 
     startScreen.style.display =
@@ -1642,9 +1681,9 @@ function onSessionEnd() {
 }
 
 
-// ============================================
+// ======================================================
 // RESTART
-// ============================================
+// ======================================================
 
 restartButton.addEventListener(
     "click",
@@ -1654,51 +1693,27 @@ restartButton.addEventListener(
             "none";
 
 
-        if (
-            navigator.xr
-        ) {
-
-            startAR();
-
-        }
-
-    }
-);
-
-
-// ============================================
-// START BUTTON
-// ============================================
-
-startButton.addEventListener(
-    "click",
-    () => {
-
         startAR();
 
     }
 );
 
 
-// ============================================
-// ERROR
-// ============================================
+// ======================================================
+// START
+// ======================================================
 
-function showError(
-    message
-) {
-
-    errorMessage.innerText =
-        message;
-
-}
+startButton.addEventListener(
+    "click",
+    startAR
+);
 
 
-// ============================================
+// ======================================================
 // RESIZE
-// ============================================
+// ======================================================
 
-function onWindowResize() {
+function onResize() {
 
     camera.aspect =
         window.innerWidth /
@@ -1712,5 +1727,19 @@ function onWindowResize() {
         window.innerWidth,
         window.innerHeight
     );
+
+}
+
+
+// ======================================================
+// ERROR
+// ======================================================
+
+function showError(
+    message
+) {
+
+    errorMessage.innerText =
+        message;
 
 }
