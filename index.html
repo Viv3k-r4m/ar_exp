@@ -8,75 +8,52 @@
     <meta
         name="viewport"
         content="width=device-width,
-                 initial-scale=1.0,
-                 maximum-scale=1.0,
-                 user-scalable=no">
+        initial-scale=1.0,
+        maximum-scale=1.0,
+        user-scalable=no">
 
-    <meta name="theme-color" content="#050814">
+    <meta
+        name="theme-color"
+        content="#050814">
 
-    <title>AR Cognitive Lab</title>
+    <title>
+        AR Cognitive Lab
+    </title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css">
 
 </head>
 
-
 <body>
 
+    <!-- ==============================
+         UI
+    =============================== -->
 
-<!-- =========================================
-     CAMERA
-========================================= -->
+    <div id="ui">
 
-<video
-    id="camera"
-    autoplay
-    muted
-    playsinline>
-</video>
+        <div id="header">
 
+            <div class="title">
+                🧠 AR Cognitive Lab
+            </div>
 
-<!-- =========================================
-     DARK CAMERA OVERLAY
-========================================= -->
+            <div class="subtitle">
+                Catch the Target
+            </div>
 
-<div id="cameraOverlay"></div>
-
-
-<!-- =========================================
-     APPLICATION
-========================================= -->
-
-<main id="app">
-
-
-    <!-- =====================================
-         HEADER
-    ====================================== -->
-
-    <header id="header">
-
-        <div class="logo">
-            🧠 AR Cognitive Lab
         </div>
 
-        <div class="subtitle">
-            Catch the Target
-        </div>
 
-    </header>
+        <!-- START SCREEN -->
 
+        <div id="startScreen"
+             class="panel">
 
-    <!-- =====================================
-         START SCREEN
-    ====================================== -->
-
-    <section id="startScreen">
-
-        <div class="panel">
-
-            <div class="brain">
-                🧠
+            <div class="emoji">
+                🎯
             </div>
 
             <h1>
@@ -84,46 +61,52 @@
             </h1>
 
             <p>
-                A visual attention and
-                reaction-time experiment.
+                A markerless AR cognitive
+                attention experiment.
             </p>
 
-            <p class="smallText">
+            <p class="small">
 
-                Virtual objects will appear
-                over your camera view.
-
-                Find the requested object
+                Find the requested 3D orb
                 and tap it as quickly as possible.
 
             </p>
 
             <button id="startButton">
 
-                📷 Start Camera
+                START AR
 
             </button>
 
-            <p id="cameraError"></p>
+            <div id="errorMessage"></div>
 
         </div>
 
-    </section>
+
+        <!-- AR INSTRUCTIONS -->
+
+        <div id="instruction"
+             class="floatingPanel">
+
+            <div id="instructionTitle">
+                Find a flat surface
+            </div>
+
+            <div id="instructionText">
+                Move your phone slowly
+                to detect the floor or table.
+            </div>
+
+        </div>
 
 
-    <!-- =====================================
-         GAME SCREEN
-    ====================================== -->
+        <!-- GAME INFO -->
 
-    <section id="gameScreen">
-
-
-        <!-- Trial information -->
-
-        <div id="topInfo">
+        <div id="gameInfo"
+             class="floatingPanel">
 
             <span id="trialText">
-                Trial 1 / 10
+                Trial 0 / 10
             </span>
 
             <span id="scoreText">
@@ -133,61 +116,12 @@
         </div>
 
 
-        <!-- =================================
-             INSTRUCTION
-        ================================== -->
+        <!-- RESULT -->
 
-        <div id="instructionBox">
+        <div id="resultScreen"
+             class="panel">
 
-            <div class="instructionSmall">
-                FIND AND TAP
-            </div>
-
-            <div id="targetInstruction">
-                THE RED ORB
-            </div>
-
-        </div>
-
-
-        <!-- =================================
-             VIRTUAL AR OBJECTS
-        ================================== -->
-
-        <div id="orbContainer"></div>
-
-
-        <!-- =================================
-             FEEDBACK
-        ================================== -->
-
-        <div id="feedback"></div>
-
-
-        <!-- =================================
-             BOTTOM INFO
-        ================================== -->
-
-        <div id="bottomInfo">
-
-            <span>
-                Tap the target
-            </span>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================
-         RESULT SCREEN
-    ====================================== -->
-
-    <section id="resultScreen">
-
-        <div class="resultPanel">
-
-            <div class="resultIcon">
+            <div class="emoji">
                 🧠
             </div>
 
@@ -195,102 +129,113 @@
                 Test Complete
             </h1>
 
-            <div class="resultItem">
+            <div class="resultRow">
 
                 <span>
                     Accuracy
                 </span>
 
-                <strong id="accuracyResult">
+                <strong id="accuracy">
                     0%
                 </strong>
 
             </div>
 
 
-            <div class="resultItem">
+            <div class="resultRow">
 
                 <span>
-                    Correct Responses
+                    Correct
                 </span>
 
-                <strong id="correctResult">
+                <strong id="correct">
                     0 / 10
                 </strong>
 
             </div>
 
 
-            <div class="resultItem">
+            <div class="resultRow">
 
                 <span>
                     Average Reaction
                 </span>
 
-                <strong id="reactionResult">
-                    0.00 sec
+                <strong id="average">
+                    0.00 s
                 </strong>
 
             </div>
 
 
-            <div class="resultItem">
+            <div class="resultRow">
 
                 <span>
-                    Fastest Response
+                    Fastest Reaction
                 </span>
 
-                <strong id="fastestResult">
-                    0.00 sec
+                <strong id="fastest">
+                    0.00 s
                 </strong>
 
             </div>
 
 
-            <div class="cognitiveBox">
+            <div class="cognitive">
 
                 <strong>
                     Cognitive Functions
                 </strong>
 
-                <ul>
+                <p>
+                    Visual Attention
+                </p>
 
-                    <li>
-                        Visual Attention
-                    </li>
+                <p>
+                    Visual Search
+                </p>
 
-                    <li>
-                        Visual Search
-                    </li>
+                <p>
+                    Reaction Time
+                </p>
 
-                    <li>
-                        Reaction Time
-                    </li>
-
-                    <li>
-                        Decision Making
-                    </li>
-
-                </ul>
+                <p>
+                    Decision Making
+                </p>
 
             </div>
 
 
             <button id="restartButton">
 
-                Run Test Again
+                RUN AGAIN
 
             </button>
 
         </div>
 
-    </section>
+    </div>
 
 
-</main>
+    <!-- Three.js + WebXR -->
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three":
+            "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            
+            "three/addons/":
+            "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
 
 
-<script src="app.js"></script>
+    <script
+        type="module"
+        src="app.js">
+    </script>
 
 </body>
 

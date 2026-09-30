@@ -2,7 +2,8 @@
 
     box-sizing: border-box;
 
-    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color:
+        transparent;
 
 }
 
@@ -22,21 +23,16 @@ body {
 
     background: #050814;
 
+    color: white;
+
     font-family:
         Arial,
-        Helvetica,
         sans-serif;
-
-    color: white;
 
 }
 
 
-/* =========================================
-   CAMERA
-========================================= */
-
-#camera {
+canvas {
 
     position: fixed;
 
@@ -46,90 +42,64 @@ body {
 
     height: 100%;
 
-    object-fit: cover;
-
-    z-index: 0;
-
-    background: #050814;
+    display: block;
 
 }
 
 
-/* =========================================
-   CAMERA DARKNESS
-========================================= */
+/* =================================
+   UI
+================================= */
 
-#cameraOverlay {
+#ui {
 
     position: fixed;
 
     inset: 0;
 
-    z-index: 1;
+    z-index: 10;
 
     pointer-events: none;
 
-    background:
-        linear-gradient(
-            to bottom,
-            rgba(0,0,0,0.45),
-            rgba(0,0,0,0.10) 45%,
-            rgba(0,0,0,0.55)
-        );
-
 }
 
-
-/* =========================================
-   MAIN APP
-========================================= */
-
-#app {
-
-    position: fixed;
-
-    inset: 0;
-
-    z-index: 2;
-
-}
-
-
-/* =========================================
-   HEADER
-========================================= */
 
 #header {
 
     position: absolute;
 
-    top: 14px;
+    top:
+        max(
+            12px,
+            env(safe-area-inset-top)
+        );
 
     left: 50%;
 
     transform:
         translateX(-50%);
 
-    width: calc(100% - 28px);
+    width:
+        calc(100% - 24px);
 
     max-width: 500px;
 
-    padding: 11px 15px;
+    padding: 11px;
 
     border-radius: 16px;
 
     text-align: center;
 
     background:
-        rgba(0,0,0,0.65);
+        rgba(0,0,0,0.70);
 
     backdrop-filter:
-        blur(8px);
+        blur(10px);
 
 }
 
 
-.logo {
+.title {
 
     font-size: 20px;
 
@@ -140,62 +110,57 @@ body {
 
 .subtitle {
 
-    margin-top: 3px;
-
     font-size: 12px;
 
-    opacity: 0.75;
+    opacity: 0.7;
+
+    margin-top: 3px;
 
 }
 
 
-/* =========================================
-   START SCREEN
-========================================= */
-
-#startScreen {
-
-    position: absolute;
-
-    inset: 0;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    padding: 20px;
-
-}
-
+/* =================================
+   PANELS
+================================= */
 
 .panel {
 
-    width: 100%;
+    position: absolute;
 
-    max-width: 420px;
+    top: 50%;
 
-    padding: 30px 22px;
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    width:
+        calc(100% - 32px);
+
+    max-width: 430px;
+
+    padding: 25px;
 
     border-radius: 24px;
 
     text-align: center;
 
     background:
-        rgba(5,8,20,0.90);
+        rgba(5,8,20,0.94);
 
     backdrop-filter:
-        blur(14px);
+        blur(15px);
 
     box-shadow:
         0 20px 60px
         rgba(0,0,0,0.5);
 
+    pointer-events: auto;
+
 }
 
 
-.brain {
+.emoji {
 
     font-size: 55px;
 
@@ -204,9 +169,8 @@ body {
 
 .panel h1 {
 
-    margin: 10px 0;
-
-    font-size: 27px;
+    margin:
+        10px 0;
 
 }
 
@@ -215,43 +179,29 @@ body {
 
     line-height: 1.5;
 
-    color: #d4d7df;
+    color: #d1d5db;
 
 }
 
 
-.smallText {
+.small {
 
     font-size: 14px;
 
 }
 
 
-/* =========================================
-   BUTTONS
-========================================= */
+/* =================================
+   BUTTON
+================================= */
 
 button {
 
-    border: none;
-
-    outline: none;
-
-    cursor: pointer;
-
-    touch-action: manipulation;
-
-}
-
-
-#startButton,
-#restartButton {
-
     width: 100%;
 
-    margin-top: 15px;
-
     padding: 15px;
+
+    border: 0;
 
     border-radius: 14px;
 
@@ -264,11 +214,12 @@ button {
 
     font-weight: 700;
 
+    touch-action: manipulation;
+
 }
 
 
-#startButton:active,
-#restartButton:active {
+button:active {
 
     transform:
         scale(0.97);
@@ -276,498 +227,114 @@ button {
 }
 
 
-#cameraError {
+/* =================================
+   ERROR
+================================= */
 
-    color: #ff6b6b !important;
+#errorMessage {
+
+    margin-top: 12px;
+
+    color: #fb7185;
 
     font-size: 13px;
 
 }
 
 
-/* =========================================
-   GAME SCREEN
-========================================= */
+/* =================================
+   FLOATING PANELS
+================================= */
 
-#gameScreen {
-
-    display: none;
+.floatingPanel {
 
     position: absolute;
-
-    inset: 0;
-
-}
-
-
-/* =========================================
-   TOP INFO
-========================================= */
-
-#topInfo {
-
-    position: absolute;
-
-    top: 82px;
 
     left: 50%;
 
     transform:
         translateX(-50%);
 
-    width: calc(100% - 28px);
+    width:
+        calc(100% - 28px);
 
     max-width: 500px;
 
-    display: flex;
+    padding: 10px 14px;
 
-    justify-content: space-between;
+    border-radius: 15px;
 
-    padding: 9px 14px;
-
-    border-radius: 14px;
+    text-align: center;
 
     background:
-        rgba(0,0,0,0.65);
+        rgba(0,0,0,0.70);
 
     backdrop-filter:
         blur(8px);
 
-    font-size: 14px;
+    pointer-events: none;
+
+}
+
+
+#instruction {
+
+    display: none;
+
+    top: 105px;
+
+}
+
+
+#instructionTitle {
+
+    font-size: 17px;
 
     font-weight: 700;
 
 }
 
 
-/* =========================================
-   INSTRUCTION
-========================================= */
-
-#instructionBox {
-
-    position: absolute;
-
-    top: 135px;
-
-    left: 50%;
-
-    transform:
-        translateX(-50%);
-
-    width: calc(100% - 30px);
-
-    max-width: 450px;
-
-    padding: 12px;
-
-    border-radius: 18px;
-
-    text-align: center;
-
-    background:
-        rgba(0,0,0,0.65);
-
-    backdrop-filter:
-        blur(8px);
-
-}
-
-
-.instructionSmall {
-
-    font-size: 11px;
-
-    letter-spacing: 2px;
-
-    opacity: 0.7;
-
-}
-
-
-#targetInstruction {
+#instructionText {
 
     margin-top: 4px;
 
-    font-size: 21px;
-
-    font-weight: 800;
-
-}
-
-
-/* =========================================
-   ORB CONTAINER
-========================================= */
-
-#orbContainer {
-
-    position: absolute;
-
-    inset: 0;
-
-    pointer-events: none;
-
-}
-
-
-/* =========================================
-   ORB
-========================================= */
-
-.orb {
-
-    position: absolute;
-
-    width: 72px;
-
-    height: 72px;
-
-    padding: 0;
-
-    border-radius: 50%;
-
-    pointer-events: auto;
-
-    touch-action: manipulation;
-
-    transform:
-        translate(-50%, -50%);
-
-    border: 2px solid
-        rgba(255,255,255,0.45);
-
-    box-shadow:
-
-        inset -10px -10px 18px
-            rgba(0,0,0,0.35),
-
-        inset 8px 8px 15px
-            rgba(255,255,255,0.35),
-
-        0 0 15px
-            currentColor,
-
-        0 0 35px
-            currentColor;
-
-    animation:
-        floatOrb 2.5s ease-in-out infinite;
-
-}
-
-
-/* highlight */
-
-.orb::before {
-
-    content: "";
-
-    position: absolute;
-
-    width: 20px;
-
-    height: 12px;
-
-    top: 12px;
-
-    left: 14px;
-
-    border-radius: 50%;
-
-    background:
-        rgba(255,255,255,0.75);
-
-    transform:
-        rotate(-30deg);
-
-    filter:
-        blur(2px);
-
-}
-
-
-/* =========================================
-   ORB COLORS
-========================================= */
-
-.red {
-
-    background:
-        radial-gradient(
-            circle at 30% 25%,
-            #fff,
-            #ff6b6b 8%,
-            #ef233c 35%,
-            #8b0000 100%
-        );
-
-    color: #ff334f;
-
-}
-
-
-.blue {
-
-    background:
-        radial-gradient(
-            circle at 30% 25%,
-            #fff,
-            #60a5fa 8%,
-            #2563eb 35%,
-            #071b60 100%
-        );
-
-    color: #3388ff;
-
-}
-
-
-.green {
-
-    background:
-        radial-gradient(
-            circle at 30% 25%,
-            #fff,
-            #86efac 8%,
-            #16a34a 35%,
-            #064e3b 100%
-        );
-
-    color: #22dd77;
-
-}
-
-
-.yellow {
-
-    background:
-        radial-gradient(
-            circle at 30% 25%,
-            #fff,
-            #fde68a 8%,
-            #eab308 35%,
-            #795500 100%
-        );
-
-    color: #ffd000;
-
-}
-
-
-.purple {
-
-    background:
-        radial-gradient(
-            circle at 30% 25%,
-            #fff,
-            #c084fc 8%,
-            #9333ea 35%,
-            #3b0764 100%
-        );
-
-    color: #b050ff;
-
-}
-
-
-.cyan {
-
-    background:
-        radial-gradient(
-            circle at 30% 25%,
-            #fff,
-            #67e8f9 8%,
-            #06b6d4 35%,
-            #164e63 100%
-        );
-
-    color: #00eaff;
-
-}
-
-
-/* =========================================
-   ORB ANIMATION
-========================================= */
-
-@keyframes floatOrb {
-
-    0% {
-
-        margin-top: 0;
-
-    }
-
-    50% {
-
-        margin-top: -9px;
-
-    }
-
-    100% {
-
-        margin-top: 0;
-
-    }
-
-}
-
-
-/* =========================================
-   TARGET PULSE
-========================================= */
-
-.targetOrb {
-
-    animation:
-        floatOrb 2s ease-in-out infinite,
-        targetPulse 1s ease-in-out infinite;
-
-}
-
-
-@keyframes targetPulse {
-
-    0%,
-    100% {
-
-        filter:
-            brightness(1);
-
-    }
-
-    50% {
-
-        filter:
-            brightness(1.5);
-
-    }
-
-}
-
-
-/* =========================================
-   FEEDBACK
-========================================= */
-
-#feedback {
-
-    position: absolute;
-
-    top: 50%;
-
-    left: 50%;
-
-    transform:
-        translate(-50%, -50%);
-
-    font-size: 25px;
-
-    font-weight: 800;
-
-    text-shadow:
-        0 3px 15px black;
-
-    pointer-events: none;
-
-}
-
-
-/* =========================================
-   BOTTOM INFO
-========================================= */
-
-#bottomInfo {
-
-    position: absolute;
-
-    bottom: 15px;
-
-    left: 50%;
-
-    transform:
-        translateX(-50%);
-
-    padding: 9px 18px;
-
-    border-radius: 20px;
-
-    background:
-        rgba(0,0,0,0.65);
-
     font-size: 13px;
 
+    color: #d1d5db;
+
 }
 
 
-/* =========================================
-   RESULT SCREEN
-========================================= */
+#gameInfo {
+
+    display: none;
+
+    top: 105px;
+
+    justify-content: space-between;
+
+}
+
+
+/* =================================
+   RESULTS
+================================= */
 
 #resultScreen {
 
     display: none;
 
-    position: absolute;
-
-    inset: 0;
-
-    align-items: center;
-
-    justify-content: center;
-
-    padding: 20px;
-
 }
 
 
-.resultPanel {
-
-    width: 100%;
-
-    max-width: 430px;
-
-    padding: 25px;
-
-    border-radius: 24px;
-
-    background:
-        rgba(5,8,20,0.94);
-
-    backdrop-filter:
-        blur(15px);
-
-    box-shadow:
-        0 20px 60px
-        rgba(0,0,0,0.6);
-
-}
-
-
-.resultIcon {
-
-    text-align: center;
-
-    font-size: 45px;
-
-}
-
-
-.resultPanel h1 {
-
-    text-align: center;
-
-}
-
-
-.resultItem {
+.resultRow {
 
     display: flex;
 
     justify-content: space-between;
 
-    padding: 13px 0;
+    padding: 12px 0;
 
     border-bottom:
         1px solid
@@ -776,20 +343,22 @@ button {
 }
 
 
-.resultItem strong {
+.resultRow strong {
 
     color: #60a5fa;
 
 }
 
 
-.cognitiveBox {
+.cognitive {
 
     margin-top: 18px;
 
-    padding: 15px;
+    padding: 14px;
 
     border-radius: 14px;
+
+    text-align: left;
 
     background:
         rgba(37,99,235,0.15);
@@ -797,42 +366,28 @@ button {
 }
 
 
-.cognitiveBox ul {
-
-    padding-left: 20px;
-
-}
-
-
-.cognitiveBox li {
+.cognitive p {
 
     margin: 7px 0;
 
 }
 
 
-/* =========================================
-   SMALL PHONES
-========================================= */
+/* =================================
+   MOBILE
+================================= */
 
 @media (max-height: 700px) {
 
-    #instructionBox {
+    .panel {
 
-        top: 125px;
-
-    }
-
-    #orbContainer {
-
-        transform:
-            scale(0.85);
+        padding: 20px;
 
     }
 
-    #bottomInfo {
+    .emoji {
 
-        display: none;
+        font-size: 40px;
 
     }
 
