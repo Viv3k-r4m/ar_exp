@@ -427,6 +427,9 @@ button:active {
 
     display: none;
 
+    /* IMPORTANT */
+    pointer-events: auto;
+
 }
 
 

@@ -1,560 +1,313 @@
 import * as THREE from "three";
 
-
-// ======================================================
+// ============================================================
 // AR COGNITIVE LAB
-// MARKERLESS WEBXR
-// SPHERE COUNTING TASK
-// ======================================================
+// One-Trial Markerless AR Sphere Counting Task
+// ============================================================
+
+// ------------------------------------------------------------
+// DOM ELEMENTS
+// ------------------------------------------------------------
+
+const startScreen = document.getElementById("startScreen");
+const startButton = document.getElementById("startButton");
+const errorMessage = document.getElementById("errorMessage");
+
+const instruction = document.getElementById("instruction");
+const instructionTitle = document.getElementById("instructionTitle");
+const instructionText = document.getElementById("instructionText");
+
+const gameInfo = document.getElementById("gameInfo");
+const trialText = document.getElementById("trialText");
+const scoreText = document.getElementById("scoreText");
+
+const answerPanel = document.getElementById("answerPanel");
+const questionText = document.getElementById("questionText");
+const answerInput = document.getElementById("answerInput");
+const submitAnswerButton = document.getElementById("submitAnswer");
+
+const resultScreen = document.getElementById("resultScreen");
 
 
-// ======================================================
-// THREE.JS
-// ======================================================
+// ------------------------------------------------------------
+// THREE.JS VARIABLES
+// ------------------------------------------------------------
 
 let scene;
 let camera;
 let renderer;
 
 let reticle;
+let controller;
 
 let xrSession = null;
 
 let viewerSpace = null;
 let localFloorSpace = null;
-
 let hitTestSource = null;
 
 let hitTestReady = false;
-
-
-// ======================================================
-// GAME
-// ======================================================
+let surfaceDetected = false;
+let gamePlaced = false;
 
 let gameGroup = null;
 
-let placed = false;
 
-let gameStarted = false;
-
-let waitingForNext = false;
-
-let currentTrial = 0;
-
-let score = 0;
-
-let targetColor = "";
-
-let correctAnswer = 0;
-
-let trialStartTime = 0;
-
-let reactionTimes = [];
-
-const TOTAL_TRIALS = 10;
-
-
-// ======================================================
-// SPHERE SETTINGS
-// ======================================================
+// ------------------------------------------------------------
+// GAME VARIABLES
+// ------------------------------------------------------------
 
 const TOTAL_SPHERES = 12;
 
+let targetColor = null;
+let correctAnswer = 0;
 
-// ======================================================
+let trialStartTime = 0;
+let trialFinished = false;
+
+let userAnswer = 0;
+let reactionTime = 0;
+let isCorrect = false;
+
+
+// ------------------------------------------------------------
 // COLORS
-// ======================================================
+// ------------------------------------------------------------
 
-const COLORS = {
-
-    RED: 0xff304f,
-
-    BLUE: 0x3182ff,
-
-    GREEN: 0x22dd77,
-
-    YELLOW: 0xffcc33,
-
-    PURPLE: 0xb04cff,
-
-    CYAN: 0x00d9ff
-
-};
-
-const COLOR_NAMES =
-    Object.keys(COLORS);
-
-
-// ======================================================
-// HTML
-// ======================================================
-
-const startScreen =
-    document.getElementById(
-        "startScreen"
-    );
-
-const startButton =
-    document.getElementById(
-        "startButton"
-    );
-
-const errorMessage =
-    document.getElementById(
-        "errorMessage"
-    );
-
-const instruction =
-    document.getElementById(
-        "instruction"
-    );
-
-const instructionTitle =
-    document.getElementById(
-        "instructionTitle"
-    );
-
-const instructionText =
-    document.getElementById(
-        "instructionText"
-    );
-
-const gameInfo =
-    document.getElementById(
-        "gameInfo"
-    );
-
-const trialText =
-    document.getElementById(
-        "trialText"
-    );
-
-const scoreText =
-    document.getElementById(
-        "scoreText"
-    );
-
-const answerPanel =
-    document.getElementById(
-        "answerPanel"
-    );
-
-const questionText =
-    document.getElementById(
-        "questionText"
-    );
-
-const answerInput =
-    document.getElementById(
-        "answerInput"
-    );
-
-const submitAnswer =
-    document.getElementById(
-        "submitAnswer"
-    );
-
-const resultScreen =
-    document.getElementById(
-        "resultScreen"
-    );
-
-const accuracyElement =
-    document.getElementById(
-        "accuracy"
-    );
-
-const correctElement =
-    document.getElementById(
-        "correct"
-    );
-
-const averageElement =
-    document.getElementById(
-        "average"
-    );
-
-const fastestElement =
-    document.getElementById(
-        "fastest"
-    );
-
-const restartButton =
-    document.getElementById(
-        "restartButton"
-    );
+const COLORS = [
+    {
+        name: "RED",
+        hex: 0xff3333
+    },
+    {
+        name: "BLUE",
+        hex: 0x3388ff
+    },
+    {
+        name: "GREEN",
+        hex: 0x33dd66
+    },
+    {
+        name: "YELLOW",
+        hex: 0xffff33
+    }
+];
 
 
-// ======================================================
-// INITIALIZE
-// ======================================================
+// ============================================================
+// INITIALIZATION
+// ============================================================
 
 init();
 
 
+// ------------------------------------------------------------
+// INIT
+// ------------------------------------------------------------
+
 function init() {
 
-    // --------------------------------------------------
-    // SCENE
-    // --------------------------------------------------
+    // Scene
+    scene = new THREE.Scene();
 
-    scene =
-        new THREE.Scene();
+    // Camera
+    camera = new THREE.PerspectiveCamera(
+        70,
+        window.innerWidth / window.innerHeight,
+        0.01,
+        20
+    );
 
-
-    // --------------------------------------------------
-    // CAMERA
-    // --------------------------------------------------
-
-    camera =
-        new THREE.PerspectiveCamera(
-
-            70,
-
-            window.innerWidth /
-            window.innerHeight,
-
-            0.01,
-
-            20
-
-        );
-
-
-    // --------------------------------------------------
-    // RENDERER
-    // --------------------------------------------------
-
-    renderer =
-        new THREE.WebGLRenderer({
-
-            antialias: true,
-
-            alpha: true,
-
-            powerPreference:
-                "high-performance"
-
-        });
-
+    // Renderer
+    renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true
+    });
 
     renderer.setPixelRatio(
-
-        Math.min(
-            window.devicePixelRatio,
-            2
-        )
-
+        Math.min(window.devicePixelRatio, 2)
     );
-
 
     renderer.setSize(
-
         window.innerWidth,
         window.innerHeight
-
     );
-
 
     renderer.xr.enabled = true;
 
+    renderer.xr.setReferenceSpaceType("local");
 
-    // IMPORTANT
-
-    renderer.xr.setReferenceSpaceType(
-        "local"
-    );
+    document.body.appendChild(renderer.domElement);
 
 
-    document.body.appendChild(
-        renderer.domElement
-    );
-
-
-    // --------------------------------------------------
+    // --------------------------------------------------------
     // LIGHTING
-    // --------------------------------------------------
+    // --------------------------------------------------------
 
-    const ambient =
-        new THREE.HemisphereLight(
-
-            0xffffff,
-
-            0x444444,
-
-            2
-
-        );
-
-
-    scene.add(
-        ambient
+    const ambientLight = new THREE.HemisphereLight(
+        0xffffff,
+        0x444444,
+        2
     );
 
-
-    const light =
-        new THREE.DirectionalLight(
-
-            0xffffff,
-
-            2
-
-        );
+    scene.add(ambientLight);
 
 
-    light.position.set(
+    const directionalLight = new THREE.DirectionalLight(
+        0xffffff,
+        1.5
+    );
+
+    directionalLight.position.set(
         2,
         4,
         2
     );
 
-
-    scene.add(
-        light
-    );
+    scene.add(directionalLight);
 
 
-    // --------------------------------------------------
+    // --------------------------------------------------------
     // RETICLE
-    // --------------------------------------------------
+    // --------------------------------------------------------
 
     createReticle();
 
 
-    // --------------------------------------------------
-    // EVENTS
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // CONTROLLER
+    // Used ONLY to place the game.
+    // Spheres are NOT touch-selectable.
+    // --------------------------------------------------------
 
-    window.addEventListener(
-        "resize",
-        onResize
+    controller = renderer.xr.getController(0);
+
+    controller.addEventListener(
+        "select",
+        onXRSelect
     );
 
+    scene.add(controller);
+
+
+    // --------------------------------------------------------
+    // EVENTS
+    // --------------------------------------------------------
 
     startButton.addEventListener(
         "click",
         startAR
     );
 
-
-    submitAnswer.addEventListener(
+    submitAnswerButton.addEventListener(
         "click",
-        submitUserAnswer
+        submitAnswer
     );
-
-
-    restartButton.addEventListener(
-        "click",
-        restartGame
-    );
-
 
     answerInput.addEventListener(
         "keydown",
-        event => {
+        function(event) {
 
-            if (
-                event.key ===
-                "Enter"
-            ) {
+            if (event.key === "Enter") {
 
-                submitUserAnswer();
+                event.preventDefault();
 
+                submitAnswer();
             }
-
         }
     );
 
 
-    // --------------------------------------------------
-    // RENDER LOOP
-    // --------------------------------------------------
-
-    renderer.setAnimationLoop(
-        render
+    window.addEventListener(
+        "resize",
+        onWindowResize
     );
 
 
-    // --------------------------------------------------
-    // CHECK AR
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // CHECK AR SUPPORT
+    // --------------------------------------------------------
 
     checkARSupport();
-
 }
 
 
-// ======================================================
-// WEBXR SUPPORT
-// ======================================================
+// ============================================================
+// CHECK WEBXR SUPPORT
+// ============================================================
 
 async function checkARSupport() {
 
     if (!navigator.xr) {
 
-        disableAR(
-            "WebXR is not available in this browser."
+        showError(
+            "WebXR is not available. Please use Chrome on a compatible Android device."
         );
 
         return;
-
     }
-
 
     try {
 
         const supported =
-            await navigator.xr
-                .isSessionSupported(
-                    "immersive-ar"
-                );
-
+            await navigator.xr.isSessionSupported(
+                "immersive-ar"
+            );
 
         if (!supported) {
 
-            disableAR(
-                "Immersive AR is not supported."
+            showError(
+                "Immersive AR is not supported on this device/browser."
             );
 
             return;
-
         }
 
+        startButton.disabled = false;
 
-        console.log(
-            "✓ immersive-ar supported"
-        );
-
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
+            "AR support check failed:",
             error
         );
 
-
-        disableAR(
-            "Unable to check AR support."
+        showError(
+            "Could not check AR support."
         );
-
     }
-
 }
 
 
-// ======================================================
-// DISABLE AR
-// ======================================================
-
-function disableAR(message) {
-
-    startButton.disabled =
-        true;
-
-    startButton.style.opacity =
-        "0.5";
-
-    errorMessage.innerText =
-        message;
-
-}
-
-
-// ======================================================
-// RETICLE
-// ======================================================
-
-function createReticle() {
-
-    const geometry =
-        new THREE.RingGeometry(
-
-            0.08,
-
-            0.10,
-
-            32
-
-        );
-
-
-    const material =
-        new THREE.MeshBasicMaterial({
-
-            color: 0x00ff88,
-
-            side: THREE.DoubleSide
-
-        });
-
-
-    reticle =
-        new THREE.Mesh(
-
-            geometry,
-
-            material
-
-        );
-
-
-    reticle.rotation.x =
-        -Math.PI / 2;
-
-
-    reticle.matrixAutoUpdate =
-        false;
-
-
-    reticle.visible =
-        false;
-
-
-    scene.add(
-        reticle
-    );
-
-}
-
-
-// ======================================================
+// ============================================================
 // START AR
-// ======================================================
+// ============================================================
 
 async function startAR() {
 
-    errorMessage.innerText =
-        "";
-
-
-    startButton.disabled =
-        true;
-
-
     try {
 
-        instructionTitle.innerText =
-            "📱 STARTING AR";
+        startButton.disabled = true;
+
+        errorMessage.style.display = "none";
+
+        instruction.style.display = "block";
+
+        instructionTitle.textContent =
+            "Starting AR...";
+
+        instructionText.textContent =
+            "Allow camera access if requested.";
 
 
-        instructionText.innerText =
-            "Opening camera and AR...";
-
-
-        // ------------------------------------------------
-        // REQUEST AR
-        // ------------------------------------------------
+        // ----------------------------------------------------
+        // REQUEST XR SESSION
+        // ----------------------------------------------------
 
         xrSession =
             await navigator.xr.requestSession(
-
                 "immersive-ar",
-
                 {
-
                     requiredFeatures: [
                         "hit-test"
                     ],
@@ -565,283 +318,202 @@ async function startAR() {
                     ],
 
                     domOverlay: {
-
-                        root:
-                            document.body
-
+                        root: document.body
                     }
-
                 }
-
             );
 
 
-        console.log(
-            "✓ AR session started"
-        );
-
-
-        // ------------------------------------------------
-        // THREE.JS SESSION
-        // ------------------------------------------------
+        // ----------------------------------------------------
+        // CONNECT XR SESSION
+        // ----------------------------------------------------
 
         await renderer.xr.setSession(
             xrSession
         );
 
 
-        // ------------------------------------------------
-        // VIEWER SPACE
-        // ------------------------------------------------
+        // ----------------------------------------------------
+        // REFERENCE SPACES
+        // ----------------------------------------------------
 
         viewerSpace =
-            await xrSession
-                .requestReferenceSpace(
-                    "viewer"
-                );
+            await xrSession.requestReferenceSpace(
+                "viewer"
+            );
 
-
-        // ------------------------------------------------
-        // LOCAL FLOOR
-        // ------------------------------------------------
 
         try {
 
             localFloorSpace =
-                await xrSession
-                    .requestReferenceSpace(
-                        "local-floor"
-                    );
+                await xrSession.requestReferenceSpace(
+                    "local-floor"
+                );
 
-        }
+        } catch (error) {
 
-        catch {
+            console.log(
+                "local-floor unavailable, using local"
+            );
 
             localFloorSpace =
-                await xrSession
-                    .requestReferenceSpace(
-                        "local"
-                    );
-
+                await xrSession.requestReferenceSpace(
+                    "local"
+                );
         }
 
-
-        // ------------------------------------------------
-        // SYNCHRONIZE THREE.JS
-        // ------------------------------------------------
 
         renderer.xr.setReferenceSpace(
             localFloorSpace
         );
 
 
-        // ------------------------------------------------
-        // HIT TEST
-        // ------------------------------------------------
+        // ----------------------------------------------------
+        // HIT TEST SOURCE
+        // ----------------------------------------------------
 
         hitTestSource =
-            await xrSession
-                .requestHitTestSource({
-
-                    space:
-                        viewerSpace
-
-                });
+            await xrSession.requestHitTestSource({
+                space: viewerSpace
+            });
 
 
-        hitTestReady =
-            true;
+        hitTestReady = true;
 
 
-        console.log(
-            "✓ Hit-test ready"
-        );
-
-
-        // ------------------------------------------------
-        // RESET GAME
-        // ------------------------------------------------
-
-        placed = false;
-
-        gameStarted = false;
-
-        waitingForNext = false;
-
-        currentTrial = 0;
-
-        score = 0;
-
-        reactionTimes = [];
-
-
-        // ------------------------------------------------
-        // UI
-        // ------------------------------------------------
-
-        startScreen.style.display =
-            "none";
-
-
-        resultScreen.style.display =
-            "none";
-
-
-        instruction.style.display =
-            "block";
-
-
-        gameInfo.style.display =
-            "none";
-
-
-        answerPanel.style.display =
-            "none";
-
-
-        instructionTitle.innerText =
-            "🔍 SCANNING FOR SURFACE";
-
-
-        instructionText.innerText =
-            "Move your phone slowly over a floor or table.";
-
-
-        // ------------------------------------------------
-        // SESSION END
-        // ------------------------------------------------
+        // ----------------------------------------------------
+        // XR SESSION END
+        // ----------------------------------------------------
 
         xrSession.addEventListener(
             "end",
-            onSessionEnd
+            onXRSessionEnd
         );
 
-    }
 
-    catch (error) {
+        // ----------------------------------------------------
+        // UI
+        // ----------------------------------------------------
+
+        startScreen.style.display = "none";
+
+        instruction.style.display = "block";
+
+        instructionTitle.textContent =
+            "Find a surface";
+
+        instructionText.textContent =
+            "Move your phone slowly until the reticle appears on a flat surface.";
+
+
+        // ----------------------------------------------------
+        // XR RENDER LOOP
+        // ----------------------------------------------------
+
+        renderer.setAnimationLoop(
+            renderXR
+        );
+
+
+    } catch (error) {
 
         console.error(
-            "AR ERROR:",
+            "Failed to start AR:",
             error
         );
 
-
-        startButton.disabled =
-            false;
-
-
         showError(
-            getReadableError(
-                error
-            )
+            "Unable to start AR: " +
+            error.message
         );
 
+        startButton.disabled = false;
     }
-
 }
 
 
-// ======================================================
-// ERROR
-// ======================================================
+// ============================================================
+// CREATE RETICLE
+// ============================================================
 
-function getReadableError(error) {
+function createReticle() {
 
-    if (
-        error.name ===
-        "NotAllowedError"
-    ) {
+    reticle = new THREE.Mesh(
 
-        return (
-            "AR permission was denied."
-        );
+        new THREE.RingGeometry(
+            0.08,
+            0.1,
+            32
+        ),
 
-    }
+        new THREE.MeshBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.9,
+            side: THREE.DoubleSide
+        })
 
-
-    if (
-        error.name ===
-        "NotSupportedError"
-    ) {
-
-        return (
-            "This device/browser does not support AR."
-        );
-
-    }
-
-
-    if (
-        error.name ===
-        "SecurityError"
-    ) {
-
-        return (
-            "AR requires HTTPS."
-        );
-
-    }
-
-
-    return (
-        "Could not start AR: " +
-        (
-            error.message ||
-            error.name
-        )
     );
 
+    reticle.rotation.x =
+        -Math.PI / 2;
+
+    reticle.matrixAutoUpdate = false;
+
+    reticle.visible = false;
+
+    scene.add(reticle);
 }
 
 
-// ======================================================
+// ============================================================
+// XR SELECT
+// Tap screen / select controller
+// ONLY USED TO PLACE THE GAME
+// ============================================================
+
+function onXRSelect() {
+
+    if (!xrSession) {
+        return;
+    }
+
+    if (gamePlaced) {
+        return;
+    }
+
+    if (!reticle.visible) {
+        return;
+    }
+
+    placeGame();
+}
+
+
+// ============================================================
 // PLACE GAME
-// ======================================================
+// ============================================================
 
 function placeGame() {
 
-    if (
-        !reticle.visible
-    ) {
-
+    if (gamePlaced) {
         return;
+    }
 
+    if (!reticle.visible) {
+        return;
     }
 
 
-    placed = true;
+    gamePlaced = true;
 
 
-    // --------------------------------------------------
-    // SAVE POSITION
-    // --------------------------------------------------
-
-    const placementMatrix =
-        reticle.matrix.clone();
-
-
-    reticle.visible =
-        false;
-
-
-    // --------------------------------------------------
-    // GAME GROUP
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // CREATE GAME GROUP
+    // --------------------------------------------------------
 
     gameGroup =
         new THREE.Group();
-
-
-    gameGroup.position.setFromMatrixPosition(
-        placementMatrix
-    );
-
-
-    gameGroup.rotation.set(
-        0,
-        0,
-        0
-    );
 
 
     scene.add(
@@ -849,1120 +521,914 @@ function placeGame() {
     );
 
 
-    // --------------------------------------------------
-    // START
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // PLACE GROUP AT RETICLE
+    // --------------------------------------------------------
 
-    instructionTitle.innerText =
-        "🧠 COUNT THE SPHERES";
+    gameGroup.matrixAutoUpdate = false;
 
-
-    instructionText.innerText =
-        "Look carefully at the spheres.";
-
-
-    gameInfo.style.display =
-        "flex";
-
-
-    setTimeout(
-        startGame,
-        700
+    gameGroup.matrix.copy(
+        reticle.matrix
     );
 
+
+    // --------------------------------------------------------
+    // HIDE RETICLE
+    // --------------------------------------------------------
+
+    reticle.visible = false;
+
+
+    // --------------------------------------------------------
+    // UPDATE UI
+    // --------------------------------------------------------
+
+    instruction.style.display = "none";
+
+    gameInfo.style.display = "flex";
+
+    trialText.textContent =
+        "Trial 1 / 1";
+
+    scoreText.textContent =
+        "Counting";
+
+
+    // --------------------------------------------------------
+    // START ONE TRIAL
+    // --------------------------------------------------------
+
+    startTrial();
 }
 
 
-// ======================================================
-// START GAME
-// ======================================================
+// ============================================================
+// START ONE TRIAL
+// ============================================================
 
-function startGame() {
+function startTrial() {
 
-    gameStarted =
-        true;
+    trialFinished = false;
 
+    userAnswer = 0;
 
-    currentTrial =
-        0;
+    reactionTime = 0;
 
-
-    score =
-        0;
+    isCorrect = false;
 
 
-    reactionTimes =
-        [];
-
-
-    scoreText.innerText =
-        "Score: 0";
-
-
-    nextTrial();
-
-}
-
-
-// ======================================================
-// NEXT TRIAL
-// ======================================================
-
-function nextTrial() {
-
-    if (
-        currentTrial >=
-        TOTAL_TRIALS
-    ) {
-
-        finishGame();
-
-        return;
-
-    }
-
-
-    currentTrial++;
-
-
-    waitingForNext =
-        false;
-
-
-    trialText.innerText =
-        `Trial ${currentTrial} / ${TOTAL_TRIALS}`;
-
-
-    removeSpheres();
-
-
-    // --------------------------------------------------
-    // SELECT COLOR
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // SELECT RANDOM TARGET COLOR
+    // --------------------------------------------------------
 
     targetColor =
-        COLOR_NAMES[
+        COLORS[
             Math.floor(
-                Math.random() *
-                COLOR_NAMES.length
+                Math.random() * COLORS.length
             )
         ];
 
 
-    // --------------------------------------------------
-    // CREATE SPHERES
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // RANDOM TARGET COUNT
+    // 2 TO 6
+    // --------------------------------------------------------
 
     correctAnswer =
-        createSphereField();
+        Math.floor(
+            Math.random() * 5
+        ) + 2;
 
 
-    // --------------------------------------------------
+    console.log(
+        "Target color:",
+        targetColor.name
+    );
+
+    console.log(
+        "Correct answer:",
+        correctAnswer
+    );
+
+
+    // --------------------------------------------------------
+    // CREATE SPHERES
+    // --------------------------------------------------------
+
+    createSphereField();
+
+
+    // --------------------------------------------------------
     // QUESTION
-    // --------------------------------------------------
+    // --------------------------------------------------------
 
-    questionText.innerText =
-        `How many ${targetColor} spheres?`;
-
-
-    instructionTitle.innerText =
-        `🔎 COUNT THE ${targetColor} SPHERES`;
+    questionText.textContent =
+        `How many ${targetColor.name} spheres?`;
 
 
-    instructionText.innerText =
-        "Observe the AR scene and count carefully.";
+    // --------------------------------------------------------
+    // RESET INPUT
+    // --------------------------------------------------------
+
+    answerInput.value = "";
+
+    answerInput.disabled = false;
 
 
-    // --------------------------------------------------
-    // ANSWER UI
-    // --------------------------------------------------
-
-    answerInput.value =
-        "";
-
+    // --------------------------------------------------------
+    // SHOW ANSWER PANEL
+    // --------------------------------------------------------
 
     answerPanel.style.display =
         "block";
 
 
-    // --------------------------------------------------
-    // TIMER
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // START TIMER
+    // --------------------------------------------------------
 
     trialStartTime =
         performance.now();
 
 
-    // Focus after a short delay
+    // --------------------------------------------------------
+    // FOCUS INPUT
+    // --------------------------------------------------------
 
     setTimeout(
-        () => {
+        function() {
 
             answerInput.focus();
 
         },
         300
     );
-
 }
 
 
-// ======================================================
+// ============================================================
 // CREATE SPHERE FIELD
-// ======================================================
+// ============================================================
 
 function createSphereField() {
 
-    const positions = [];
-
-    let targetCount = 0;
-
-
-    // --------------------------------------------------
-    // Decide target count
-    // --------------------------------------------------
-
-    targetCount =
-        2 +
-        Math.floor(
-            Math.random() * 5
-        );
-
-
-    // 2 to 6 target-color spheres
-
-
-    // --------------------------------------------------
-    // Create target spheres
-    // --------------------------------------------------
-
-    for (
-        let i = 0;
-        i < targetCount;
-        i++
+    // Remove previous spheres
+    while (
+        gameGroup.children.length > 0
     ) {
 
-        createSphere(
-            targetColor,
-            positions
+        const object =
+            gameGroup.children[0];
+
+        gameGroup.remove(
+            object
         );
 
+
+        if (object.geometry) {
+
+            object.geometry.dispose();
+
+        }
+
+        if (object.material) {
+
+            object.material.dispose();
+
+        }
     }
 
 
-    // --------------------------------------------------
-    // Create distractors
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // GENERATE POSITIONS FIRST
+    // This prevents spheres from overlapping.
+    // --------------------------------------------------------
 
-    const distractorCount =
-        TOTAL_SPHERES -
-        targetCount;
+    const positions = [];
 
 
     for (
         let i = 0;
-        i < distractorCount;
+        i < TOTAL_SPHERES;
         i++
     ) {
+
+        let position;
+
+        let valid = false;
+
+
+        while (!valid) {
+
+            position =
+                new THREE.Vector3(
+
+                    (Math.random() - 0.5) * 1.8,
+
+                    0.08 +
+                    Math.random() * 0.15,
+
+                    (Math.random() - 0.5) * 1.2
+
+                );
+
+
+            valid = true;
+
+
+            // Check distance from existing spheres
+            for (
+                const existing of positions
+            ) {
+
+                if (
+                    position.distanceTo(
+                        existing
+                    ) < 0.20
+                ) {
+
+                    valid = false;
+
+                    break;
+                }
+            }
+        }
+
+
+        positions.push(
+            position
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // RANDOM TARGET POSITIONS
+    // --------------------------------------------------------
+
+    const targetIndices = [];
+
+
+    while (
+        targetIndices.length <
+        correctAnswer
+    ) {
+
+        const index =
+            Math.floor(
+                Math.random() *
+                TOTAL_SPHERES
+            );
+
+
+        if (
+            !targetIndices.includes(
+                index
+            )
+        ) {
+
+            targetIndices.push(
+                index
+            );
+        }
+    }
+
+
+    // --------------------------------------------------------
+    // CREATE SPHERES
+    // --------------------------------------------------------
+
+    for (
+        let i = 0;
+        i < TOTAL_SPHERES;
+        i++
+    ) {
+
+        const isTarget =
+            targetIndices.includes(
+                i
+            );
+
 
         let color;
 
 
-        do {
+        if (isTarget) {
 
             color =
-                COLOR_NAMES[
-                    Math.floor(
-                        Math.random() *
-                        COLOR_NAMES.length
-                    )
-                ];
+                targetColor.hex;
 
+        } else {
+
+            color =
+                getRandomDistractorColor();
         }
-
-        while (
-            color ===
-            targetColor
-        );
 
 
         createSphere(
-            color,
-            positions
+            positions[i],
+            color
         );
-
     }
-
-
-    // --------------------------------------------------
-    // Shuffle spheres
-    // --------------------------------------------------
-
-    shuffleSpheres();
-
-
-    return targetCount;
-
 }
 
 
-// ======================================================
-// CREATE SPHERE
-// ======================================================
+// ============================================================
+// DISTRACTOR COLORS
+// ============================================================
+
+function getRandomDistractorColor() {
+
+    const distractorColors = [
+
+        0xff8844,
+
+        0xaa44ff,
+
+        0x44ddff,
+
+        0xff66aa,
+
+        0xffffff
+
+    ];
+
+
+    return distractorColors[
+        Math.floor(
+            Math.random() *
+            distractorColors.length
+        )
+    ];
+}
+
+
+// ============================================================
+// CREATE ONE SPHERE
+// ============================================================
 
 function createSphere(
-    colorName,
-    positions
+    position,
+    color
 ) {
-
-    let x;
-    let z;
-
-    let valid = false;
-
-
-    // --------------------------------------------------
-    // Find position
-    // --------------------------------------------------
-
-    for (
-        let attempt = 0;
-        attempt < 100;
-        attempt++
-    ) {
-
-        x =
-            -0.50 +
-            Math.random() *
-            1.00;
-
-
-        z =
-            -0.50 +
-            Math.random() *
-            1.00;
-
-
-        valid =
-            true;
-
-
-        for (
-            const position
-            of positions
-        ) {
-
-            const dx =
-                x -
-                position.x;
-
-
-            const dz =
-                z -
-                position.z;
-
-
-            const distance =
-                Math.sqrt(
-                    dx * dx +
-                    dz * dz
-                );
-
-
-            if (
-                distance < 0.15
-            ) {
-
-                valid =
-                    false;
-
-                break;
-
-            }
-
-        }
-
-
-        if (valid) {
-
-            break;
-
-        }
-
-    }
-
-
-    positions.push({
-        x,
-        z
-    });
-
-
-    // --------------------------------------------------
-    // SPHERE
-    // --------------------------------------------------
 
     const geometry =
         new THREE.SphereGeometry(
-
             0.065,
-
             32,
-
             32
-
         );
 
 
     const material =
         new THREE.MeshStandardMaterial({
 
-            color:
-                COLORS[colorName],
+            color: color,
 
-            emissive:
-                COLORS[colorName],
+            emissive: color,
 
-            emissiveIntensity:
-                0.65,
+            emissiveIntensity: 0.20,
 
-            roughness:
-                0.20,
+            roughness: 0.35,
 
-            metalness:
-                0.15
-
+            metalness: 0.1
         });
 
 
     const sphere =
         new THREE.Mesh(
-
             geometry,
-
             material
-
         );
 
 
-    sphere.position.set(
-
-        x,
-
-        0.12 +
-        Math.random() *
-        0.12,
-
-        z
-
+    sphere.position.copy(
+        position
     );
 
 
-    sphere.userData.color =
-        colorName;
+    // Save original position
+    // for animation.
+    sphere.userData.baseY =
+        position.y;
 
 
-    sphere.userData.sphere =
-        true;
+    sphere.userData.phase =
+        Math.random() *
+        Math.PI *
+        2;
 
 
     gameGroup.add(
         sphere
     );
-
 }
 
 
-// ======================================================
-// SHUFFLE SPHERES
-// ======================================================
-
-function shuffleSpheres() {
-
-    const spheres = [];
-
-
-    gameGroup.children.forEach(
-        child => {
-
-            if (
-                child.userData &&
-                child.userData.sphere
-            ) {
-
-                spheres.push(
-                    child
-                );
-
-            }
-
-        }
-    );
-
-
-    // Randomly change positions
-    // to avoid target color being grouped.
-
-    spheres.forEach(
-        sphere => {
-
-            sphere.position.x =
-                -0.50 +
-                Math.random() *
-                1.00;
-
-
-            sphere.position.z =
-                -0.50 +
-                Math.random() *
-                1.00;
-
-        }
-    );
-
-}
-
-
-// ======================================================
-// REMOVE SPHERES
-// ======================================================
-
-function removeSpheres() {
-
-    if (!gameGroup) {
-
-        return;
-
-    }
-
-
-    const objects = [];
-
-
-    gameGroup.children.forEach(
-        child => {
-
-            if (
-                child.userData &&
-                child.userData.sphere
-            ) {
-
-                objects.push(
-                    child
-                );
-
-            }
-
-        }
-    );
-
-
-    objects.forEach(
-        sphere => {
-
-            gameGroup.remove(
-                sphere
-            );
-
-
-            sphere.geometry.dispose();
-
-
-            sphere.material.dispose();
-
-        }
-    );
-
-}
-
-
-// ======================================================
+// ============================================================
 // SUBMIT ANSWER
-// ======================================================
+// ============================================================
 
-function submitUserAnswer() {
+function submitAnswer() {
 
-    if (
-        !gameStarted ||
-        waitingForNext
-    ) {
+    // Don't allow multiple submissions
+    if (trialFinished) {
 
         return;
-
     }
 
+
+    // --------------------------------------------------------
+    // READ INPUT
+    // --------------------------------------------------------
 
     const value =
         answerInput.value.trim();
 
 
-    if (
-        value === ""
-    ) {
+    // --------------------------------------------------------
+    // EMPTY INPUT
+    // --------------------------------------------------------
 
-        instructionTitle.innerText =
-            "⚠️ ENTER AN ANSWER";
+    if (value === "") {
 
+        questionText.textContent =
+            "Please enter a number.";
 
-        instructionText.innerText =
-            "Enter the number of spheres you counted.";
+        answerInput.focus();
 
         return;
-
     }
 
 
-    const answer =
-        parseInt(
-            value,
-            10
-        );
+    // --------------------------------------------------------
+    // CONVERT TO NUMBER
+    // --------------------------------------------------------
 
+    const parsedAnswer =
+        Number(value);
+
+
+    // --------------------------------------------------------
+    // VALIDATE
+    // --------------------------------------------------------
 
     if (
-        Number.isNaN(answer)
+        !Number.isInteger(
+            parsedAnswer
+        ) ||
+        parsedAnswer < 0
     ) {
 
-        return;
+        questionText.textContent =
+            "Please enter a valid number.";
 
+        answerInput.value = "";
+
+        answerInput.focus();
+
+        return;
     }
 
 
-    waitingForNext =
-        true;
+    // --------------------------------------------------------
+    // SAVE ANSWER
+    // --------------------------------------------------------
+
+    userAnswer =
+        parsedAnswer;
 
 
-    // --------------------------------------------------
-    // REACTION TIME
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // CALCULATE REACTION TIME
+    // --------------------------------------------------------
 
-    const reaction =
+    reactionTime =
         (
-            performance.now()
-            -
+            performance.now() -
             trialStartTime
         ) / 1000;
 
 
-    reactionTimes.push(
-        reaction
-    );
+    // --------------------------------------------------------
+    // CHECK ANSWER
+    // --------------------------------------------------------
 
-
-    // --------------------------------------------------
-    // CHECK
-    // --------------------------------------------------
-
-    const correct =
-        answer ===
+    isCorrect =
+        userAnswer ===
         correctAnswer;
 
 
-    if (correct) {
-
-        score++;
+    trialFinished = true;
 
 
-        scoreText.innerText =
-            `Score: ${score}`;
+    console.log(
+        "User answer:",
+        userAnswer
+    );
+
+    console.log(
+        "Correct answer:",
+        correctAnswer
+    );
+
+    console.log(
+        "Reaction time:",
+        reactionTime.toFixed(2),
+        "seconds"
+    );
+
+    console.log(
+        "Correct:",
+        isCorrect
+    );
 
 
-        instructionTitle.innerText =
-            "✅ CORRECT";
+    // --------------------------------------------------------
+    // DISABLE INPUT
+    // --------------------------------------------------------
+
+    answerInput.disabled = true;
 
 
-        instructionText.innerText =
-            `There were ${correctAnswer} ${targetColor} spheres. ` +
-            `Reaction time: ${reaction.toFixed(2)} s`;
-
-    }
-
-    else {
-
-        instructionTitle.innerText =
-            "❌ INCORRECT";
+    submitAnswerButton.disabled = true;
 
 
-        instructionText.innerText =
-            `Correct answer: ${correctAnswer}. ` +
-            `You entered: ${answer}`;
-
-    }
-
-
-    // --------------------------------------------------
-    // Hide answer
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // HIDE ANSWER PANEL
+    // --------------------------------------------------------
 
     answerPanel.style.display =
         "none";
 
 
-    // --------------------------------------------------
-    // Next trial
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // SHOW RESULT
+    // --------------------------------------------------------
 
-    setTimeout(
-        () => {
-
-            nextTrial();
-
-        },
-        1200
-    );
-
+    showResult();
 }
 
 
-// ======================================================
-// FINISH GAME
-// ======================================================
+// ============================================================
+// SHOW RESULT
+// ============================================================
 
-function finishGame() {
+function showResult() {
 
-    gameStarted =
-        false;
-
-
-    removeSpheres();
-
-
-    // --------------------------------------------------
-    // ACCURACY
-    // --------------------------------------------------
-
-    const accuracy =
-        (
-            score /
-            TOTAL_TRIALS
-        ) * 100;
-
-
-    // --------------------------------------------------
-    // AVERAGE
-    // --------------------------------------------------
-
-    const average =
-        reactionTimes.length > 0
-
-            ? reactionTimes.reduce(
-                (
-                    sum,
-                    value
-                ) =>
-                    sum + value,
-                0
-            )
-            /
-            reactionTimes.length
-
-            : 0;
-
-
-    // --------------------------------------------------
-    // FASTEST
-    // --------------------------------------------------
-
-    const fastest =
-        reactionTimes.length > 0
-
-            ? Math.min(
-                ...reactionTimes
-            )
-
-            : 0;
-
-
-    // --------------------------------------------------
-    // DISPLAY
-    // --------------------------------------------------
-
-    accuracyElement.innerText =
-        `${accuracy.toFixed(0)}%`;
-
-
-    correctElement.innerText =
-        `${score} / ${TOTAL_TRIALS}`;
-
-
-    averageElement.innerText =
-        `${average.toFixed(2)} s`;
-
-
-    fastestElement.innerText =
-        `${fastest.toFixed(2)} s`;
-
-
-    answerPanel.style.display =
-        "none";
-
-
-    instruction.style.display =
-        "none";
-
-
+    // Hide game info
     gameInfo.style.display =
         "none";
 
 
+    // Show result screen
     resultScreen.style.display =
         "block";
 
-}
+
+    // --------------------------------------------------------
+    // ACCURACY
+    // --------------------------------------------------------
+
+    const accuracy =
+        isCorrect
+            ? 100
+            : 0;
 
 
-// ======================================================
-// HIT TEST
-// ======================================================
+    // --------------------------------------------------------
+    // UPDATE RESULT ELEMENTS
+    // --------------------------------------------------------
 
-function updateHitTest(frame) {
+    const accuracyElement =
+        document.getElementById(
+            "accuracy"
+        );
 
-    if (
-        !hitTestReady ||
-        !hitTestSource ||
-        !localFloorSpace ||
-        placed
-    ) {
+    const correctCountElement =
+        document.getElementById(
+            "correctCount"
+        );
 
-        return;
+    const averageReactionElement =
+        document.getElementById(
+            "averageReaction"
+        );
 
-    }
-
-
-    const results =
-        frame.getHitTestResults(
-            hitTestSource
+    const fastestReactionElement =
+        document.getElementById(
+            "fastestReaction"
         );
 
 
-    // --------------------------------------------------
-    // NO SURFACE
-    // --------------------------------------------------
+    if (accuracyElement) {
 
-    if (
-        results.length === 0
-    ) {
-
-        reticle.visible =
-            false;
-
-
-        instructionTitle.innerText =
-            "🔍 SCANNING FOR SURFACE";
-
-
-        instructionText.innerText =
-            "Move your phone slowly over a textured floor or table.";
-
-
-        return;
-
+        accuracyElement.textContent =
+            accuracy + "%";
     }
 
 
-    // --------------------------------------------------
-    // SURFACE FOUND
-    // --------------------------------------------------
+    if (correctCountElement) {
 
-    const hit =
-        results[0];
-
-
-    const pose =
-        hit.getPose(
-            localFloorSpace
-        );
-
-
-    if (!pose) {
-
-        reticle.visible =
-            false;
-
-        return;
-
+        correctCountElement.textContent =
+            isCorrect
+                ? "1 / 1"
+                : "0 / 1";
     }
 
 
-    // --------------------------------------------------
-    // RETICLE
-    // --------------------------------------------------
+    if (averageReactionElement) {
 
-    reticle.visible =
-        true;
+        averageReactionElement.textContent =
+            reactionTime.toFixed(2) +
+            " s";
+    }
 
 
-    reticle.matrix.fromArray(
-        pose.transform.matrix
+    if (fastestReactionElement) {
+
+        fastestReactionElement.textContent =
+            reactionTime.toFixed(2) +
+            " s";
+    }
+
+
+    // --------------------------------------------------------
+    // SCORE
+    // --------------------------------------------------------
+
+    scoreText.textContent =
+        isCorrect
+            ? "Correct!"
+            : "Incorrect";
+
+
+    console.log(
+        "========== FINAL RESULT =========="
     );
 
+    console.log(
+        "Target:",
+        targetColor.name
+    );
 
-    instructionTitle.innerText =
-        "🟢 SURFACE FOUND";
+    console.log(
+        "Correct answer:",
+        correctAnswer
+    );
 
+    console.log(
+        "User answer:",
+        userAnswer
+    );
 
-    instructionText.innerText =
-        "Tap the screen to place the AR spheres.";
+    console.log(
+        "Accuracy:",
+        accuracy + "%"
+    );
 
+    console.log(
+        "Reaction time:",
+        reactionTime.toFixed(2) +
+        " seconds"
+    );
+
+    console.log(
+        "=================================="
+    );
 }
 
 
-// ======================================================
-// SCREEN TAP TO PLACE
-// ======================================================
+// ============================================================
+// ANIMATION / XR RENDER LOOP
+// ============================================================
 
-window.addEventListener(
-    "click",
-    event => {
-
-        if (
-            !xrSession ||
-            placed ||
-            !reticle.visible
-        ) {
-
-            return;
-
-        }
-
-
-        // Ignore UI buttons
-
-        if (
-            event.target.tagName ===
-            "BUTTON" ||
-            event.target.tagName ===
-            "INPUT"
-        ) {
-
-            return;
-
-        }
-
-
-        placeGame();
-
-    }
-);
-
-
-// ======================================================
-// RENDER
-// ======================================================
-
-function render(
-    time,
+function renderXR(
+    timestamp,
     frame
 ) {
 
-    if (frame) {
+    if (
+        frame &&
+        hitTestSource &&
+        hitTestReady &&
+        !gamePlaced
+    ) {
 
-        updateHitTest(
-            frame
-        );
+        const hitTestResults =
+            frame.getHitTestResults(
+                hitTestSource
+            );
 
+
+        if (
+            hitTestResults.length > 0
+        ) {
+
+            const hit =
+                hitTestResults[0];
+
+
+            const pose =
+                hit.getPose(
+                    localFloorSpace
+                );
+
+
+            if (pose) {
+
+                reticle.visible =
+                    true;
+
+
+                reticle.matrix.fromArray(
+                    pose.transform.matrix
+                );
+
+
+                if (!surfaceDetected) {
+
+                    surfaceDetected = true;
+
+
+                    instructionTitle.textContent =
+                        "Surface found";
+
+                    instructionText.textContent =
+                        "Tap the screen to place the spheres.";
+
+                }
+            }
+
+
+        } else {
+
+            reticle.visible =
+                false;
+
+
+            surfaceDetected =
+                false;
+
+
+            instructionTitle.textContent =
+                "Find a surface";
+
+            instructionText.textContent =
+                "Move your phone slowly over a flat surface.";
+        }
     }
 
 
-    // --------------------------------------------------
-    // Animate spheres
-    // --------------------------------------------------
+    // --------------------------------------------------------
+    // ANIMATE SPHERES
+    // --------------------------------------------------------
 
-    if (gameGroup) {
+    if (
+        gameGroup &&
+        gamePlaced
+    ) {
 
         gameGroup.children.forEach(
-            object => {
+            function(object, index) {
 
                 if (
-                    object.userData &&
-                    object.userData.sphere
+                    object.userData.baseY ===
+                    undefined
                 ) {
 
-                    object.rotation.y +=
-                        0.02;
-
-
-                    const base =
-                        object.position.y;
-
-
-                    object.position.y =
-                        base +
-                        Math.sin(
-                            time * 0.003 +
-                            object.position.x * 5
-                        ) * 0.0008;
-
+                    return;
                 }
+
+
+                const baseY =
+                    object.userData.baseY;
+
+
+                const phase =
+                    object.userData.phase;
+
+
+                object.position.y =
+                    baseY +
+                    Math.sin(
+                        timestamp * 0.002 +
+                        phase
+                    ) * 0.008;
+
+
+                object.rotation.y +=
+                    0.01;
 
             }
         );
-
     }
 
+
+    // --------------------------------------------------------
+    // RENDER
+    // --------------------------------------------------------
 
     renderer.render(
         scene,
         camera
     );
-
 }
 
 
-// ======================================================
-// SESSION END
-// ======================================================
+// ============================================================
+// XR SESSION END
+// ============================================================
 
-function onSessionEnd() {
+function onXRSessionEnd() {
 
     console.log(
-        "AR session ended."
+        "XR session ended."
     );
 
 
-    hitTestSource =
-        null;
+    xrSession = null;
+
+    hitTestSource = null;
+
+    viewerSpace = null;
+
+    localFloorSpace = null;
+
+    hitTestReady = false;
+
+    surfaceDetected = false;
+
+    gamePlaced = false;
 
 
-    viewerSpace =
-        null;
+    renderer.setAnimationLoop(
+        null
+    );
 
 
-    localFloorSpace =
-        null;
-
-
-    hitTestReady =
-        false;
-
-
-    xrSession =
-        null;
-
-
-    placed =
-        false;
-
-
-    gameStarted =
-        false;
-
-
-    waitingForNext =
-        false;
-
-
-    if (gameGroup) {
-
-        scene.remove(
-            gameGroup
-        );
-
-
-        gameGroup =
-            null;
-
-    }
-
-
-    startScreen.style.display =
-        "block";
-
-
+    // Hide AR UI
     instruction.style.display =
         "none";
 
-
     gameInfo.style.display =
         "none";
-
 
     answerPanel.style.display =
         "none";
 
 
+    // Show start screen
+    startScreen.style.display =
+        "block";
+
+
     startButton.disabled =
         false;
-
 }
 
 
-// ======================================================
+// ============================================================
 // RESTART
-// ======================================================
+// ============================================================
 
-function restartGame() {
-
-    resultScreen.style.display =
-        "none";
-
-
-    if (xrSession) {
-
-        placed = false;
-
-        gameStarted = false;
-
-        waitingForNext = false;
-
-        currentTrial = 0;
-
-        score = 0;
-
-        reactionTimes = [];
+const restartButton =
+    document.getElementById(
+        "restartButton"
+    );
 
 
-        if (gameGroup) {
+if (restartButton) {
 
-            scene.remove(
-                gameGroup
-            );
+    restartButton.addEventListener(
+        "click",
+        function() {
 
-            gameGroup =
-                null;
+            location.reload();
 
         }
-
-
-        reticle.visible =
-            false;
-
-
-        instruction.style.display =
-            "block";
-
-
-        instructionTitle.innerText =
-            "🔍 SCANNING FOR SURFACE";
-
-
-        instructionText.innerText =
-            "Move your phone slowly over a floor or table.";
-
-
-        gameInfo.style.display =
-            "none";
-
-
-        answerPanel.style.display =
-            "none";
-
-
-        return;
-
-    }
-
-
-    startAR();
-
+    );
 }
 
 
-// ======================================================
-// RESIZE
-// ======================================================
+// ============================================================
+// ERROR HANDLING
+// ============================================================
 
-function onResize() {
+function showError(message) {
+
+    errorMessage.textContent =
+        message;
+
+    errorMessage.style.display =
+        "block";
+}
+
+
+// ============================================================
+// WINDOW RESIZE
+// ============================================================
+
+function onWindowResize() {
 
     camera.aspect =
         window.innerWidth /
@@ -1973,22 +1439,7 @@ function onResize() {
 
 
     renderer.setSize(
-
         window.innerWidth,
         window.innerHeight
-
     );
-
-}
-
-
-// ======================================================
-// ERROR DISPLAY
-// ======================================================
-
-function showError(message) {
-
-    errorMessage.innerText =
-        message;
-
 }
